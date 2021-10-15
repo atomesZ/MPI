@@ -59,7 +59,7 @@ elif is_server:
                         continue
                     comm.Send([np.array([len(uncommitted_logs)] + uncommitted_logs, dtype="i"), MPI.INT], dest=server_uid, tag=CHANGES_TO_COMMIT)
 
-                list_servers_acknowledging_logs: list = []
+                list_servers_acknowledging_logs: list = [rank]
                 # Wait for a majority of responses
                 while len(list_servers_acknowledging_logs) < num_servers / 2:
                     comm.Recv([buffer, MPI.INT], source=MPI.ANY_SOURCE, tag=FOLLOWER_ACKNOWLEDGE_CHANGES)
