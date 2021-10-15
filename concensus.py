@@ -41,7 +41,15 @@ elif is_server:
         print(f"Leader is {rank}")
         uncommitted_logs = []
 
-        while True:  # Sleep at the end for a heartbeat
+        while len(committed_logs) < num_clients:  # Sleep at the end for a heartbeat
+            # A client sends its message to the leader
+            comm.Recv([buffer, MPI.INT], source=MPI.ANY_SOURCE, tag=CLIENT_TAG)
+            client_uid = buffer[0]  # FIXME use status
+
+            # We put the client_uid in uncommitted logs
+            uncommitted_logs.append(client_uid)
+            print(f"Leader received a data from client: {client_uid}")
+
             # Send logs to followers
             if uncommitted_logs:
                 print("Leader entered uncommitted logs")
@@ -77,16 +85,9 @@ elif is_server:
                 # Send confirmation of commit to the sending client
                 comm.Send([None, MPI.INT], dest=committed_logs[-1], tag=COMMIT_CONFIRMATION)
 
-            # A client sends its message to the leader
-            comm.Recv([buffer, MPI.INT], source=MPI.ANY_SOURCE, tag=CLIENT_TAG)
-            client_uid = buffer[0]  # FIXME use status
-
-            # We put the client_uid in uncommitted logs
-            uncommitted_logs.append(client_uid)
-            print(f"Leader received a data from client: {client_uid}")
 
     else:  # Follower's code
-        while True:
+        while len(committed_logs) < num_clients:
             # Wait for the changes to commit
             comm.Recv([buffer, MPI.INT], source=leader_uid, tag=CHANGES_TO_COMMIT)
             print(f"Server {rank} received data from Leader")
@@ -101,6 +102,8 @@ elif is_server:
             # Wait for the leader to confirm the commit
             comm.Recv([None, MPI.INT], source=leader_uid, tag=LEADER_COMMIT)
             committed_logs += uncommitted_logs
+
+            num_received_client = len(committed_logs)
 
             # Write down to disk the log file
             with open(f"log_server_{rank}.txt", "w+") as f:
