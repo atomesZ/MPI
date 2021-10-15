@@ -21,7 +21,7 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
     #votes counter, init with 1 (vote for himself)
     cpt = 1 #choose counter and not array, we dont know who votes for him
     while now() - time_now < time_out:
-        server, data = irecv_data()
+        server, data, tag = irecv_data()
 
         if data is not None:
             print("candidat_loop - rank", RANK, " data: " , data, " from: ", server)
@@ -32,7 +32,8 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
                 return leader, term, status
             #count votes received
             elif "vote" in data:
-                cpt = cpt + 1          #else -> iwanttobecandidate -> skip
+                cpt = cpt + 1
+            #else -> iwanttobecandidate -> skip
 
     #if majory ==> he becomes leader
     if cpt > np.floor(NB_SERVER / 2):
@@ -53,12 +54,10 @@ def follower_loop(leader, term, time_out = random.randint(300,500)):
         "iwanttobecandidat" ==> a candidat ask him to vote for him, vote for him (if possible)
         a follower votes once per term
     '''
+    committed_logs = []
     time_now = now()
     while now() - time_now < time_out:
-        server, data = irecv_data()
-
-        #if BCAST is not None : # fonctionne pas :cry:
-        #    print("BCAST :",BCAST," rank:",RANK)
+        server, data, tag = irecv_data()
 
         if data is not None:
             print("follower_loop - rank: ", RANK, " data: ",data, "from ", server)
@@ -78,10 +77,18 @@ def follower_loop(leader, term, time_out = random.randint(300,500)):
                     term += 1
                     print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
 
-            #else:
-                # donnée client, tout va bene : truc de sego & etienne?
-                #data = comm.recv(dest=leader, tag=SERVER_TAG)
-                #comm.isend(data, dest=leader, tag=SERVER_TAG)
+            else: #log part
+                if tag == CHANGES_TO_COMMIT:
+                    buffer = data[0]
+                    len_uncommitted_logs = buffer[0]
+                    uncommitted_logs = buffer[1:len_uncommitted_logs+1]
+                    comm.isend(uncommitted_logs, dest=server, tag=FOLLOWER_ACKNOWLEDGE_CHANGES)
+
+                elif tag == LEADER_COMMIT:
+                    committed_logs += data #fix?
+                    # Write down to disk the log file
+                    with open(f"log_server_{RANK}.txt", "w+") as f:
+                        f.writelines([f"{line}\n" for line in committed_logs])
 
             time_now = now()
     return leader, term
@@ -89,7 +96,7 @@ def follower_loop(leader, term, time_out = random.randint(300,500)):
 
 
 # Heartbeat + Leader death
-def leader_loop(term, time_heartbeat = random.randint(150,300)):
+def leader_loop(term, uncommitted_logs = [], uncommitted_logs_clients_uid = [], time_heartbeat = random.randint(150,300)):
     '''
         A leader can receive:
         "heartbeat_follower" ==> we stocked who answered
@@ -99,23 +106,82 @@ def leader_loop(term, time_heartbeat = random.randint(150,300)):
                 one or more servers didn't answer
         data of the clients ==> TODO
     '''
+    #JE SUIS DESORMAIS LE LEADER
+    isend_loop_client("jesuisleleader")
+
+    #while pour eviter les appels recursifs
+
     heartbeat_leader(RANK, term)
     time_now = now()
     data = [0] * NB_SERVER
+    committed_logs = []
+    committed_logs_clients_uid = []
+    list_followers_uncommitted_logs_internal = [] * NB_SERVER
     while now() - time_now < time_heartbeat:
-        server, recv = irecv_data()
-        if server is not None:
+        server, recv, tag = irecv_data()
+        if recv is not None:
             print("leader_loop rank: ", RANK, " data: ",recv, "from ", server)
-        if recv is not None and recv == "heartbeat_follower":
-            data[server - NB_CLIENT] = 1
-        #TODO : else #data client return
+            if "heartbeat_follower" in recv:
+                data[server - NB_CLIENT] = 1
+            else:
+                #TODO : else #data client return
+                if tag == CLIENT_TAG:
+                    client_rank = server
+                    # We put the client_uid in uncommitted logs
+                    uncommitted_logs.append(recv)
+                    uncommitted_logs_clients_uid.append(client_rank)
+
+                    print(f"Leader received a data from client: {client_rank}")
+                    # Send logs to followers
+                    isend_loop(RANK, [np.array([len(uncommitted_logs)] + uncommitted_logs, dtype="i"), MPI.INT],tag=CHANGES_TO_COMMIT) #check
+
+                    committed_logs += uncommitted_logs
+                    uncommitted_logs = []
+
+                elif tag == FOLLOWER_ACKNOWLEDGE_CHANGES:
+                    list_followers_uncommitted_logs_internal[server - NB_CLIENT] = recv #recv tableau de uncommited
+
+    #RECURSIVITE LIMIT 1000 FOIS DONC FAIRE UN WHILE AVEC CETTE CONDITION
     if sum(data) == 0:
         status = "FOLLOWER"
         return term, status
+
     elif len(data) -1 != sum(data):
         print("leader:",RANK,"serveur mort?",data)
-    return leader_loop(term)
 
+    #Log part
+    max_len = 0
+    num_ppl_agreeing = 0
+
+    while num_ppl_agreeing < NB_SERVER / 2:
+        max_len += 1
+
+        # We count the num_ppl_agreeing
+        num_ppl_agreeing = 0
+        for sub_lists in list_followers_uncommitted_logs_internal:
+            if len(sub_lists) >= max_len:
+                num_ppl_agreeing += 1
+
+    max_len -= 1
+    # max len logs
+
+    committed_logs += uncommitted_logs[:max_len]
+    committed_logs_clients_uid += uncommitted_logs_clients_uid[:max_len]
+
+    uncommitted_logs = uncommitted_logs[max_len:]
+    uncommitted_logs_clients_uid = uncommitted_logs_clients_uid[max_len:]
+
+    isend_loop(RANK, committed_logs, tag="LEADER_COMMIT")
+
+    # Write down to disk the log file
+    with open(f"log_server_{RANK}.txt", "w+") as f:
+        f.writelines([f"{line}\n" for line in committed_logs])
+
+    # Send confirmation of commit to the sending client
+    for client_rank in committed_logs_clients_uid:
+        comm.isend("commit_confirmation", dest=client_rank)
+
+    return leader_loop(term, uncommitted_logs, uncommitted_logs_clients_uid)
 
 def time_loop(leader, term, status):
     '''

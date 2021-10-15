@@ -53,7 +53,6 @@ elif is_server:
             # Send logs to followers
             if uncommitted_logs:
                 print("Leader entered uncommitted logs")
-                # TODO broadcast the uncommitted logs to the followers
                 for server_uid in range(num_clients, num_nodes):
                     if server_uid == leader_uid:
                         continue
@@ -85,7 +84,6 @@ elif is_server:
                 # Send confirmation of commit to the sending client
                 comm.Send([None, MPI.INT], dest=committed_logs[-1], tag=COMMIT_CONFIRMATION)
 
-
     else:  # Follower's code
         while len(committed_logs) < num_clients:
             # Wait for the changes to commit
@@ -102,8 +100,6 @@ elif is_server:
             # Wait for the leader to confirm the commit
             comm.Recv([None, MPI.INT], source=leader_uid, tag=LEADER_COMMIT)
             committed_logs += uncommitted_logs
-
-            num_received_client = len(committed_logs)
 
             # Write down to disk the log file
             with open(f"log_server_{rank}.txt", "w+") as f:

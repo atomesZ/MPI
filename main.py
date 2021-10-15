@@ -7,6 +7,7 @@
 import sys
 
 # ------------------ IMPORT ----------------------
+import mpi4py.MPI
 
 from server_status_loop import *
 
@@ -16,6 +17,7 @@ if SIZE != NB_CLIENT + NB_SERVER:
     print("PROBLEM NUMBER PROCESSUS AND CLIENT SERVER")
     exit(1)
 
+# Servers code
 if if_server:
     #init each server
     '''
@@ -39,3 +41,17 @@ if if_server:
 
     print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
 
+# Clients code
+else:
+    # TODO étape 3, redemander qui est le leader frequemment (ou du moins écouter pour une nouvelle election)
+    #while(True):
+    #demande qui est le leader ?
+    st = MPI.Status()
+    data = comm.recv(source=MPI.ANY_SOURCE,status=st)
+    leader = st.source
+
+    #send data
+    data = np.array([RANK], dtype='i')
+    comm.Send([data, MPI.INT], dest=leader, tag=CLIENT_TAG)
+
+    print("Client sent data.")
