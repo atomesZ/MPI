@@ -1,2 +1,3 @@
 .idea
 log_server_*
+__pycache__
