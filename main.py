@@ -9,15 +9,15 @@ import sys
 
 # ------------------ IMPORT ----------------------
 from server_status_loop import *
+from repl import main_repl
 
 # ------------------ MAIN ----------------------
 
 NB_CLIENT = int(sys.argv[1])
 NB_SERVER = int(sys.argv[2])
 
-
 def main():
-    if SIZE != NB_CLIENT + NB_SERVER:
+    if SIZE != NB_CLIENT + NB_SERVER + 1:
         print("PROBLEM NUMBER PROCESSUS AND CLIENT SERVER")
         exit(1)
 
@@ -46,9 +46,15 @@ def main():
         print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
 
     # Clients code
-    else:
+    elif if_client:
+        while(True):
+            #REPL Start:
+            data = comm.recv(source=REPL_UID)
+            if "START" in data:
+                break
+
         # TODO étape 3, redemander qui est le leader frequemment (ou du moins écouter pour une nouvelle election)
-        # while(True):
+        #while(True): #envoie plsrs msg
         # demande qui est le leader ?
         st = MPI.Status()
         data = comm.recv(source=MPI.ANY_SOURCE,status=st)
@@ -61,6 +67,10 @@ def main():
         comm.Send(data, dest=leader, tag=CLIENT_TAG)
 
         print("Client sent data:", data)
+
+    # REPL's code
+    else:
+        main_repl()
 
 
 if __name__ == "__main__":

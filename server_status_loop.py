@@ -4,22 +4,24 @@ import time
 import numpy as np
 import random
 
-#time now
+
+# time now
 def now():
     return round(time.time() * 1000)
 
+
 def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
-    '''
+    """
         A candidate can receive:
         "vote" ==> one follower voted for him
         "imtheleader" or "heartbeat_leader ==> an other candidate was elected before him
         "iwanttobecandidat" ==> a candidat ask him to vote for him
 
-    '''
+    """
     #print("DEBUG - rank:" + str(rank) + status+ "term: "+str(term)+"leader:"+str(leader)+"candidat_loop START"+"\n")
     time_now = now()
-    #votes counter, init with 1 (vote for himself)
-    cpt = 1 #choose counter and not array, we dont know who votes for him
+    # votes counter, init with 1 (vote for himself)
+    cpt = 1 # choose counter and not array, we dont know who votes for him
     while now() - time_now < time_out:
         server, data, tag = irecv_data()
 
@@ -30,12 +32,12 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
                 status = "FOLLOWER"
                 leader = server
                 return leader, term, status
-            #count votes received
+            # count votes received
             elif "vote" in data:
                 cpt = cpt + 1
-            #else -> iwanttobecandidate -> skip
+            # else -> iwanttobecandidate -> skip
 
-    #if majory ==> he becomes leader
+    # if majory ==> he becomes leader
     if cpt > np.floor(NB_SERVER / 2):
         status = "LEADER"
         leader = RANK
@@ -47,13 +49,13 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
 
 # 3 possibilités de recv : heartbeat, imtheleader, iwanttobecandidate
 def follower_loop(leader, term, time_out=random.randint(300, 500)):
-    '''
+    """
         A follower can receive:
         "imtheleader" ==> save who is the leader
         "heartbeat_leader ==> response to the leader (send heartbeat_follower)
         "iwanttobecandidat" ==> a candidat ask him to vote for him, vote for him (if possible)
         a follower votes once per term
-    '''
+    """
     committed_logs = []
     time_now = now()
     while now() - time_now < time_out:
@@ -73,10 +75,10 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
                 with open(f"log_server_{RANK}.txt", "w+") as f:
                     f.writelines([f"{line}\n" for line in committed_logs])
 
-            #president election
+            # president election
             else:
                 if "heartbeat_leader" in data:
-                    #check if heartbeat send by current leader (and not by old leader who dead)
+                    # check if heartbeat send by current leader (and not by old leader who dead)
                     if int(server) == leader:
                         heartbeat_follower(leader)
                 elif "imtheleader" in data:
@@ -96,7 +98,7 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
 
 # Heartbeat + Leader death
 def leader_loop(term, time_heartbeat=random.randint(150, 300)):
-    '''
+    """
         A leader can receive:
         "heartbeat_follower" ==> we stocked who answered
             if data is empty :
@@ -106,7 +108,7 @@ def leader_loop(term, time_heartbeat=random.randint(150, 300)):
         data of the clients ==>
             CLIENT_TAG : get data client and send to all server
             FOLLOWER_ACKNOWLEDGE_CHANGES : good receive by followers -> write logs
-    '''
+    """
     isend_loop_client("imtheleader")
 
     committed_logs = []
@@ -190,11 +192,12 @@ def leader_loop(term, time_heartbeat=random.randint(150, 300)):
     status = "FOLLOWER"
     return term, status
 
+
 def time_loop(leader, term, status):
-    '''
+    """
         A proccess can be: candidat leader or follower
         A candidat and a leader can be a follower in their loop so we use if not else for the follower status
-    '''
+    """
     if status == "CANDIDAT":
         leader, term, status = candidat_loop(leader, status, term)
 

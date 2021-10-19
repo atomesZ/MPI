@@ -1,6 +1,6 @@
 from init_data import *
 import numpy as np
-
+from repl import listen_repl
 
 def isend_loop(rank, msg, tag_=SERVER_TAG):
     '''
@@ -43,6 +43,8 @@ def irecv_data():
             comm.Irecv(buffer, source=server)
             len_data = buffer[0]
             data = buffer[1:len_data + 1]
+        elif tag == REPL_TAG:
+            data = listen_repl()
         else:
             data = comm.recv(source=server)
 
