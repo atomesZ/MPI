@@ -64,28 +64,3 @@ def main_repl():
             recover_a_process(command)
         else:
             print("Please enter a good command")
-
-''''
-def listen_repl():
-    data = comm.recv(source=REPL_UID)
-
-    if "SPEED" in data:
-        if "LOW" in data:
-            pass
-        elif "MEDIUM" in data:
-            pass
-        else: #high
-            pass
-
-    elif "CRASH" in data:
-        while True:
-            data = comm.recv(source=REPL_UID)
-            if "RECOVERY" in data:
-                break
-                # TODO ask leader for summary
-
-    elif "RECOVERY" in data:
-        pass  # process vivant
-
-    return data
-'''

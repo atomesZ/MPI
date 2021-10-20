@@ -21,5 +21,3 @@ if_client = RANK < NB_CLIENT
 if_server = NB_CLIENT <= RANK < SIZE - 1
 
 REPL_UID = SIZE - 1
-
-#BCAST = None

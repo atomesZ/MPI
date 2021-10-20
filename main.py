@@ -50,6 +50,7 @@ def main():
             #REPL Start:
             data = comm.recv(source=REPL_UID)
             if "START" in data:
+                print("--DEBUG Client",RANK,"start")
                 break
 
         # TODO étape 3, redemander qui est le leader frequemment (ou du moins écouter pour une nouvelle election)
@@ -65,7 +66,7 @@ def main():
         data = np.array([len(data)] + data, dtype='i')
         comm.Send(data, dest=leader, tag=CLIENT_TAG)
 
-        #print("Client sent data:", data)
+        print("--DEBUG Client",RANK,"sent data:", data)
 
     # REPL's code
     else:
