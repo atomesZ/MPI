@@ -18,7 +18,7 @@ REPL_TAG = 16
 CLIENT_MESSAGE_SIZE = 1  # Hard-coded (the uid of the client)
 
 if_client = RANK < NB_CLIENT
-if_server = RANK >= NB_CLIENT
+if_server = NB_CLIENT <= RANK < SIZE - 1
 
 REPL_UID = SIZE - 1
 

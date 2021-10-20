@@ -26,7 +26,7 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
         server, data, tag = irecv_data()
 
         if data is not None:
-            print("candidat_loop - rank", RANK, " data: " , data, " from: ", server)
+            #print("candidat_loop - rank", RANK, " data: " , data, " from: ", server)
             #if there is a leader ==> become follower
             if "imtheleader" in data or "heartbeat" in data:  # Si un autre candidat est devenu leader avant lui :sad:
                 status = "FOLLOWER"
@@ -42,7 +42,7 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
         status = "LEADER"
         leader = RANK
         im_the_leader(RANK)
-        print("DEBUG - rank:" + str(RANK) + status+ ", term: "+str(term)+", leader:"+str(leader)+", candidat_loop devient un leader nb_vote:"+str(cpt)+"\n")
+        #print("DEBUG - rank:" + str(RANK) + status+ ", term: "+str(term)+", leader:"+str(leader)+", candidat_loop devient un leader nb_vote:"+str(cpt)+"\n")
 
     return leader, term, status
 
@@ -71,7 +71,7 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
             elif tag == LEADER_COMMIT:
                 committed_logs += data #fix?
                 # Write down to disk the log file
-                print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
+                #print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
                 with open(f"log_server_{RANK}.txt", "w+") as f:
                     f.writelines([f"{line}\n" for line in committed_logs])
 
@@ -82,7 +82,7 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
                     if int(server) == leader:
                         heartbeat_follower(leader)
                 elif "imtheleader" in data:
-                    print("DEBUG - rank:" + str(RANK) + ", term: "+str(term)+", leader:"+str(leader) + ", follower_loop imtheleader server: "+str(server)+"\n")
+                    #print("DEBUG - rank:" + str(RANK) + ", term: "+str(term)+", leader:"+str(leader) + ", follower_loop imtheleader server: "+str(server)+"\n")
                     leader = server
                 elif "iwanttobecandidate" in data:  # leader == -1: #todo - + si leader est mort check le heartbeat
                     # vote once per term
@@ -90,7 +90,7 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
                     if term < term_candidate:
                         vote(server)
                         term += 1
-                        print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
+                        #print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
 
             time_now = now()
     return leader, term
@@ -133,7 +133,7 @@ def leader_loop(term, time_heartbeat=random.randint(150, 300)):
                     # We put the client_uid in uncommitted logs
                     uncommitted_logs += recv.tolist()
                     uncommitted_logs_clients_uid += [client_rank]
-                    print(f"Leader received a data from client: {client_rank}")
+                    #print(f"Leader received a data from client: {client_rank}")
                     # Send logs to followers
                     isend_loop(RANK, uncommitted_logs, CHANGES_TO_COMMIT)  # check
 
@@ -151,8 +151,9 @@ def leader_loop(term, time_heartbeat=random.randint(150, 300)):
         if sum(data) == 0:
             break
 
-        elif len(data) -1 != sum(data):
-            print("leader:",RANK,"serveur mort?",data)
+        elif len(data) - 1 != sum(data):
+            pass
+            #print("leader:",RANK,"serveur mort?",data)
 
         # Logs
         if have_logs:

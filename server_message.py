@@ -1,6 +1,5 @@
 from init_data import *
 import numpy as np
-from repl import listen_repl
 
 def isend_loop(rank, msg, tag_=SERVER_TAG):
     '''
@@ -25,6 +24,30 @@ def isend_loop_client(msg, tag_=CLIENT_TAG):
     '''
     for client in range(NB_CLIENT):
         comm.isend(msg, dest=client, tag=tag_)
+
+
+def listen_repl():
+    data = comm.recv(source=REPL_UID)
+
+    if "SPEED" in data:
+        if "LOW" in data:
+            pass
+        elif "MEDIUM" in data:
+            pass
+        else: #high
+            pass
+
+    elif "CRASH" in data:
+        while True:
+            data = comm.recv(source=REPL_UID)
+            if "RECOVERY" in data:
+                break
+                # TODO ask leader for summary
+
+    elif "RECOVERY" in data:
+        pass  # process vivant
+
+    return data
 
 
 def irecv_data():

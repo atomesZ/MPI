@@ -8,8 +8,7 @@
 import sys
 
 # ------------------ IMPORT ----------------------
-from server_status_loop import *
-from repl import main_repl
+from repl import *
 
 # ------------------ MAIN ----------------------
 
@@ -33,7 +32,7 @@ def main():
         status = "FOLLOWER"
         term = 0
         leader = -1
-        print("DEBUG - rank:", RANK, status, "term: ",term, "leader:",leader,"START")
+        #print("DEBUG - rank:", RANK, status, "term: ",term, "leader:",leader,"START")
         while True:
             leader, term, status = time_loop(leader, term, status)
 
@@ -43,7 +42,7 @@ def main():
                 term += 1
                 election(RANK,term)
 
-        print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
+        #print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
 
     # Clients code
     elif if_client:
@@ -66,12 +65,11 @@ def main():
         data = np.array([len(data)] + data, dtype='i')
         comm.Send(data, dest=leader, tag=CLIENT_TAG)
 
-        print("Client sent data:", data)
+        #print("Client sent data:", data)
 
     # REPL's code
     else:
         main_repl()
-
 
 if __name__ == "__main__":
     main()
