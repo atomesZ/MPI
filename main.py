@@ -1,3 +1,4 @@
+
 # This is a sample Python script.
 
 # Press Maj+F10 to execute it or replace it with your code.
@@ -66,7 +67,7 @@ def main():
         data = np.array([len(data)] + data, dtype='i')
         comm.Send(data, dest=leader, tag=CLIENT_TAG)
 
-        print("--DEBUG Client",RANK,"sent data:", data)
+        print("--DEBUG Client",RANK,"sent data:", data, "to leader:", leader)
 
     # REPL's code
     else:

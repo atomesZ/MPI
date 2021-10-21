@@ -8,21 +8,21 @@ def start_clients():
 def speed_process(command: str):
     spl = command.split(" ")
     if len(spl) != 3:
-        print("Please SPEED (low, medium, high) $PROCESS")
+        print("Please SPEED (LOW, MEDIUM, HIGH) $PROCESS")
     else:
         speed = spl[1]
         processus_uid = int(spl[2])
         if processus_uid >= SIZE:
             print("Please enter a good $PROCESS number inferior to", SIZE)
         else:
-            if "low" in speed:
+            if "LOW" in speed:
                 comm.isend("SPEED_LOW", dest=processus_uid, tag=REPL_TAG)
-            elif "medium" in speed:
+            elif "MEDIUM" in speed:
                 comm.isend("SPEED_MEDIUM", dest=processus_uid, tag=REPL_TAG)
-            elif "high" in speed:
+            elif "HIGH" in speed:
                 comm.isend("SPEED_HIGH", dest=processus_uid, tag=REPL_TAG)
             else:
-                print("Please enter a good speed term: low, medium or high")
+                print("Please enter a good speed term: LOW, MEDIUM or HIGH")
 
 
 def crash_a_process(command: str):

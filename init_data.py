@@ -2,6 +2,7 @@
 
 from mpi4py import MPI
 from main import NB_CLIENT, NB_SERVER
+import globals
 
 comm = MPI.COMM_WORLD
 SIZE = comm.Get_size()
@@ -15,6 +16,7 @@ CHANGES_TO_COMMIT = 14
 FOLLOWER_ACKNOWLEDGE_CHANGES = 15
 REPL_TAG = 16
 
+MAX_HEARTBEAT_SKIP = 5
 CLIENT_MESSAGE_SIZE = 1  # Hard-coded (the uid of the client)
 
 if_client = RANK < NB_CLIENT

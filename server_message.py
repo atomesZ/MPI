@@ -30,21 +30,26 @@ def listen_repl():
     data = comm.recv(source=REPL_UID)
 
     if "SPEED" in data:
+        globals.TIME_OUT
         if "LOW" in data:
-            pass
+            globals.TIME_OUT = [450,600]
         elif "MEDIUM" in data:
-            pass
-        else: #high
-            pass
-
-    elif "CRASH" in data:
+            globals.TIME_OUT = [300,450]
+        else: #HIGH
+            globals.TIME_OUT = [150,300]
+        print("--DEBUG Receive",data,"- new TIME_OUT", globals.TIME_OUT)
+    
+    if "CRASH" in data:
+        print("--DEBUG Receive CRASH")
         while True:
             data = comm.recv(source=REPL_UID)
             if "RECOVERY" in data:
+                print("--DEBUG Receive RECOVERY")
                 break
                 # TODO ask leader for summary
 
     elif "RECOVERY" in data:
+        print("--DEBUG Receive RECOVERY for a living process")
         pass  # process vivant
 
     return data

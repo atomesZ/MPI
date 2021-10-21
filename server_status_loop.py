@@ -10,7 +10,7 @@ def now():
     return round(time.time() * 1000)
 
 
-def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
+def candidat_loop(leader, status, term):
     """
         A candidate can receive:
         "vote" ==> one follower voted for him
@@ -18,8 +18,10 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
         "iwanttobecandidat" ==> a candidat ask him to vote for him
 
     """
+    print("--DEBUG CANDIDAT", RANK, "TIME_OUT:",globals.TIME_OUT)
     #print("DEBUG - rank:" + str(rank) + status+ "term: "+str(term)+"leader:"+str(leader)+"candidat_loop START"+"\n")
     time_now = now()
+    time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
     # votes counter, init with 1 (vote for himself)
     cpt = 1 # choose counter and not array, we dont know who votes for him
     while now() - time_now < time_out:
@@ -38,7 +40,8 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
             # else -> iwanttobecandidate -> skip
 
     # if majory ==> he becomes leader
-    if cpt > np.floor(NB_SERVER / 2):
+    #TODO
+    if cpt > np.floor(NB_SERVER / 2): #NB_SERVER - NB_DEATHS
         status = "LEADER"
         leader = RANK
         im_the_leader(RANK)
@@ -48,7 +51,7 @@ def candidat_loop(leader, status, term, time_out = random.randint(300,500)):
 
 
 # 3 possibilités de recv : heartbeat, imtheleader, iwanttobecandidate
-def follower_loop(leader, term, time_out=random.randint(300, 500)):
+def follower_loop(leader, term):
     """
         A follower can receive:
         "imtheleader" ==> save who is the leader
@@ -56,31 +59,29 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
         "iwanttobecandidat" ==> a candidat ask him to vote for him, vote for him (if possible)
         a follower votes once per term
     """
+    print("--DEBUG FOLLOWER", RANK, "TIME_OUT:",globals.TIME_OUT)
     committed_logs = []
-    time_now = now()
-    while now() - time_now < time_out:
-        server, data, tag = irecv_data()
+    cpt_heartbeat_skip = 0
+    while cpt_heartbeat_skip < MAX_HEARTBEAT_SKIP:
+        time_now = now()
+        time_out2 = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
+        while now() - time_now < time_out2:
+            server, data, tag = irecv_data()
 
-        if data is not None:
+            if data is not None:
+                # log part
+                if tag == CHANGES_TO_COMMIT:
+                    uncommitted_logs = data.tolist()
+                    send_to_leader(leader, uncommitted_logs)
 
-            # log part
-            if tag == CHANGES_TO_COMMIT:
-                uncommitted_logs = data.tolist()
-                send_to_leader(leader, uncommitted_logs)
+                elif tag == LEADER_COMMIT:
+                    committed_logs += data #fix?
+                    # Write down to disk the log file
+                    #print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
+                    with open(f"log_server_{RANK}.txt", "w+") as f:
+                        f.writelines([f"{line}\n" for line in committed_logs])
 
-            elif tag == LEADER_COMMIT:
-                committed_logs += data #fix?
-                # Write down to disk the log file
-                #print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
-                with open(f"log_server_{RANK}.txt", "w+") as f:
-                    f.writelines([f"{line}\n" for line in committed_logs])
-
-            # president election
-            else:
-                if "heartbeat_leader" in data:
-                    # check if heartbeat send by current leader (and not by old leader who dead)
-                    if int(server) == leader:
-                        heartbeat_follower(leader)
+                # president election
                 elif "imtheleader" in data:
                     #print("DEBUG - rank:" + str(RANK) + ", term: "+str(term)+", leader:"+str(leader) + ", follower_loop imtheleader server: "+str(server)+"\n")
                     leader = server
@@ -91,13 +92,24 @@ def follower_loop(leader, term, time_out=random.randint(300, 500)):
                         vote(server)
                         term += 1
                         #print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
+                elif "heartbeat_leader" in data:
+                    # check if heartbeat send by current leader (and not by old leader who dead)
+                    if int(server) == leader:
+                        heartbeat_follower(leader)
+                        cpt_heartbeat_skip = 0
 
-            time_now = now()
+                time_now = now()
+                time_out2 = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
+
+        #no heartbeat
+        cpt_heartbeat_skip += 1
+        #if cpt_heartbeat_skip > 2:
+            #print("cpt_heartbeat_skip of",RANK,"=",cpt_heartbeat_skip)
     return leader, term
 
 
 # Heartbeat + Leader death
-def leader_loop(term, time_heartbeat=random.randint(150, 300)):
+def leader_loop(term):
     """
         A leader can receive:
         "heartbeat_follower" ==> we stocked who answered
@@ -109,6 +121,7 @@ def leader_loop(term, time_heartbeat=random.randint(150, 300)):
             CLIENT_TAG : get data client and send to all server
             FOLLOWER_ACKNOWLEDGE_CHANGES : good receive by followers -> write logs
     """
+    print("--DEBUG LEADER_LOOP ", RANK, "TIME_OUT:",globals.TIME_OUT)
     isend_loop_client("imtheleader")
 
     committed_logs = []
@@ -120,10 +133,11 @@ def leader_loop(term, time_heartbeat=random.randint(150, 300)):
 
     # while pour eviter les appels recursifs
     while True:
-        heartbeat_leader(RANK, term)
         time_now = now()
+        time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
+        heartbeat_leader(RANK, term)
         data = [0] * NB_SERVER
-        while now() - time_now < time_heartbeat:
+        while now() - time_now < time_out:
             server, recv, tag = irecv_data()
             if recv is not None:
                 #print("leader_loop rank: ", RANK, " data: ",recv, "from ", server)
