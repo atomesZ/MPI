@@ -1,5 +1,6 @@
 from server_status_loop import *
 
+
 def start_clients():
     # nothing to parse : send to clients
     isend_loop_client("START")
@@ -50,6 +51,13 @@ def recover_a_process(command: str):
         else:
             comm.isend("RECOVERY", dest=processus_uid, tag=REPL_TAG)
 
+
+def end_all_nodes():
+    for processus_uid in range(NB_CLIENT + NB_SERVER):
+        comm.isend("END", dest=processus_uid, tag=REPL_TAG)
+    exit(0)
+
+
 def main_repl():
     while True:
         command = input("Enter a command:\n")
@@ -62,5 +70,7 @@ def main_repl():
             crash_a_process(command)
         elif "RECOVERY" in command:
             recover_a_process(command)
+        elif "END" in command:
+            end_all_nodes()
         else:
             print("Please enter a good command")

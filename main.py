@@ -53,6 +53,8 @@ def main():
             if "START" in data:
                 print("--DEBUG Client",RANK,"start")
                 break
+            elif "END" in data:
+                exit(0)
 
         # TODO étape 3, redemander qui est le leader frequemment (ou du moins écouter pour une nouvelle election)
         #while(True): #envoie plsrs msg

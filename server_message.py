@@ -1,6 +1,7 @@
 from init_data import *
 import numpy as np
 
+
 def isend_loop(rank, msg, tag_=SERVER_TAG):
     '''
         rank send msg to all other servers
@@ -37,9 +38,9 @@ def listen_repl():
             globals.TIME_OUT = [300,450]
         else: #HIGH
             globals.TIME_OUT = [150,300]
-        print("--DEBUG Receive",data,"- new TIME_OUT", globals.TIME_OUT)
+        print("--DEBUG Receive", data, "- new TIME_OUT", globals.TIME_OUT)
     
-    if "CRASH" in data:
+    elif "CRASH" in data:
         print("--DEBUG Receive CRASH")
         while True:
             data = comm.recv(source=REPL_UID)
@@ -48,9 +49,15 @@ def listen_repl():
                 break
                 # TODO ask leader for summary
 
+            elif "END" in data:
+                exit(0)
+
     elif "RECOVERY" in data:
         print("--DEBUG Receive RECOVERY for a living process")
         pass  # process vivant
+
+    elif "END" in data:
+        exit(0)
 
     return data
 
