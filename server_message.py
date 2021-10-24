@@ -33,11 +33,11 @@ def listen_repl():
     if "SPEED" in data:
         globals.TIME_OUT
         if "LOW" in data:
-            globals.TIME_OUT = [450,600]
+            globals.TIME_OUT = [450, 600]
         elif "MEDIUM" in data:
-            globals.TIME_OUT = [300,450]
-        else: #HIGH
-            globals.TIME_OUT = [150,300]
+            globals.TIME_OUT = [300, 450]
+        else:  # HIGH
+            globals.TIME_OUT = [150, 300]
         print("--DEBUG Receive", data, "- new TIME_OUT", globals.TIME_OUT)
     
     elif "CRASH" in data:
@@ -73,7 +73,7 @@ def irecv_data():
         server = st.source
         tag = st.tag
         # Special case if the data comes from the client since the data is in a buffer and not a string
-        if tag == CLIENT_TAG or tag == FOLLOWER_ACKNOWLEDGE_CHANGES or tag == CHANGES_TO_COMMIT:
+        if tag == FOLLOWER_ACKNOWLEDGE_CHANGES or tag == CHANGES_TO_COMMIT:
             buffer = np.empty(50, dtype='i')
             comm.Irecv(buffer, source=server)
             len_data = buffer[0]

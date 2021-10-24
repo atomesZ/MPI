@@ -16,6 +16,7 @@ from repl import *
 NB_CLIENT = int(sys.argv[1])
 NB_SERVER = int(sys.argv[2])
 
+
 def main():
     if SIZE != NB_CLIENT + NB_SERVER + 1:
         print("PROBLEM NUMBER PROCESSUS AND CLIENT SERVER")
@@ -47,11 +48,11 @@ def main():
 
     # Clients code
     elif if_client:
-        while(True):
-            #REPL Start:
+        while True:
+            # REPL Start:
             data = comm.recv(source=REPL_UID)
             if "START" in data:
-                print("--DEBUG Client",RANK,"start")
+                print("--DEBUG Client", RANK, "start")
                 break
             elif "END" in data:
                 exit(0)
@@ -60,20 +61,27 @@ def main():
         #while(True): #envoie plsrs msg
         # demande qui est le leader ?
         st = MPI.Status()
-        data = comm.recv(source=MPI.ANY_SOURCE,status=st)
-        leader = st.source
 
-        # send data #change CLIENT_MESSAGE_SIZE if you want a larger tab
-        data = [RANK]
+        with open(f"client_input_{RANK}.txt") as f:
 
-        data = np.array([len(data)] + data, dtype='i')
-        comm.Send(data, dest=leader, tag=CLIENT_TAG)
+            comm.recv(source=MPI.ANY_SOURCE, status=st)
+            leader = st.source
 
-        print("--DEBUG Client",RANK,"sent data:", data, "to leader:", leader)
+            for send_data in f.readlines():
+                # send data #change CLIENT_MESSAGE_SIZE if you want a larger tab
+
+                #send_data = np.array([str(len(send_data))] + send_data, dtype=str)
+                #send_data = str(len(send_data)) + ' ' + send_data
+                comm.send(send_data, dest=leader, tag=CLIENT_TAG)
+
+                print("--DEBUG Client", RANK, "sent data:", send_data, "to leader:", leader)
+
+                # TODO add leader response that the data have been committed (if not then resend ?)
 
     # REPL's code
     else:
         main_repl()
+
 
 if __name__ == "__main__":
     main()

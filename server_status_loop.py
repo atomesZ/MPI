@@ -145,7 +145,7 @@ def leader_loop(term):
                 if tag == CLIENT_TAG:
                     client_rank = server
                     # We put the client_uid in uncommitted logs
-                    uncommitted_logs += recv.tolist()
+                    uncommitted_logs += recv
                     uncommitted_logs_clients_uid += [client_rank]
                     #print(f"Leader received a data from client: {client_rank}")
                     # Send logs to followers

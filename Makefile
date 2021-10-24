@@ -23,4 +23,4 @@ check_testsuite: clean all
 	@python3 testsuite.py || echo "\n==> TEST OF THE TESTSUITE: ${GREEN}OK${NC}"
 
 clean:
-	@rm log_server_*.txt 2> /dev/null || true
+	@rm log_server_*.txt client_input_*.txt 2> /dev/null || true
