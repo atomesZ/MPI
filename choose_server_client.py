@@ -1,4 +1,6 @@
 import os
+import random
+import string
 
 
 def main():
@@ -10,9 +12,16 @@ def main():
     # Generate clients' data to send
     for client_rank in range(n_clients):
         with open(f"client_input_{client_rank}.txt", "w") as f:
-            f.write(f"{client_rank}")
 
-    os.system(f"mpiexec --host localhost:{n_nodes} --stdin {n_nodes - 1} -n {n_nodes} python3 main.py {n_clients} {n_servers}")
+            length = random.randint(10, 30)
+            result = ''.join((random.choice(string.ascii_letters) for x in range(length)))
+
+            f.write(result)
+
+    os.system(f"mpiexec --host localhost:{n_nodes} "
+              f"--stdin {n_nodes - 1} "
+              f"-n {n_nodes} "
+              f"python3 main.py {n_clients} {n_servers}")
 
 
 if __name__ == "__main__":
