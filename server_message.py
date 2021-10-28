@@ -38,6 +38,7 @@ def listen_repl():
             data = comm.recv(source=REPL_UID)
             if "RECOVERY" in data:
                 print("--DEBUG Receive RECOVERY")
+                recover()
                 break
                 # TODO ask leader for summary
 
@@ -94,3 +95,14 @@ def vote(rank_candidat: int):
 
 def send_to_leader(rank_leader: int, msg: str, tag_: int = FOLLOWER_ACKNOWLEDGE_CHANGES):
     comm.isend(msg, dest=rank_leader, tag=tag_)
+
+
+def recover():
+    # Ask for recovery
+    isend_loop(RANK, None, tag_=RECOVERY_TAG)
+
+    committed_logs = comm.recv(source=MPI.ANY_SOURCE, tag=RECOVERY_TAG)
+
+    if committed_logs:
+        with open(f"log_server_{RANK}.txt", "w") as f:
+            f.writelines([f"{line}\n" for line in committed_logs])

@@ -170,6 +170,8 @@ def leader_loop(term: int):
 
                 elif "heartbeat_follower" in recv:
                     data[server - NB_CLIENT] = 1
+            elif tag == RECOVERY_TAG:
+                comm.isend(committed_logs, dest=server, tag=RECOVERY_TAG)
 
         if sum(data) == 0:
             break
