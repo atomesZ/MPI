@@ -42,7 +42,7 @@ def main():
             if status != "LEADER":
                 status = "CANDIDAT"
                 term += 1
-                election(RANK,term)
+                election(RANK, term)
 
         #print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
 
@@ -68,6 +68,7 @@ def main():
             leader = st.source
 
             for send_data in f.readlines():
+                send_data = send_data.strip('\n')
                 # send data #change CLIENT_MESSAGE_SIZE if you want a larger tab
 
                 #send_data = np.array([str(len(send_data))] + send_data, dtype=str)
