@@ -6,7 +6,7 @@ NC=\e[0m
 .PHONY: all install_requirements check check_testsuite clean
 
 all: #install_requirements
-	python3 choose_server_client.py
+	python3 main.py
 
 install_requirements:
 	pip3 install -r requirements.txt

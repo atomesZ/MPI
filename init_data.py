@@ -1,7 +1,7 @@
 # ------------------ PREPARE DATA ----------------------
 
 from mpi4py import MPI
-from main import NB_CLIENT, NB_SERVER
+from mpi_main import NB_CLIENT, NB_SERVER
 import globals
 
 comm = MPI.COMM_WORLD
