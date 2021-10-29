@@ -10,7 +10,7 @@ def now():
     return round(time.time() * 1000)
 
 
-def candidat_loop(leader: int, status: str, term: int):
+def candidat_loop():
     """
         A candidate can receive:
         "vote" ==> one follower voted for him
@@ -23,35 +23,33 @@ def candidat_loop(leader: int, status: str, term: int):
     time_now = now()
     time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
     # votes counter, init with 1 (vote for himself)
-    cpt = 1  # choose counter and not array, we dont know who votes for him
+    cpt = 1  # choose counter and not array, we don't know who votes for him
     while now() - time_now < time_out:
         server, data, tag = irecv_data()
 
         if data is not None:
             #print("candidat_loop - rank", RANK, " data: " , data, " from: ", server)
-            #if there is a leader ==> become follower
+            # if there is a leader ==> become follower
             if "imtheleader" in data or "heartbeat" in data:  # Si un autre candidat est devenu leader avant lui :sad:
-                status = "FOLLOWER"
-                leader = server
-                return leader, term, status
+                globals.status = "FOLLOWER"
+                globals.leader = server
+                return
             # count votes received
             elif "vote" in data:
                 cpt = cpt + 1
             # else -> iwanttobecandidate -> skip
 
-    # if majory ==> he becomes leader
+    # if majority ==> he becomes leader
     # TODO
-    if cpt > np.floor(NB_SERVER / 2): #NB_SERVER - NB_DEATHS
-        status = "LEADER"
-        leader = RANK
-        im_the_leader(RANK)
+    if cpt > np.floor(NB_SERVER / 2):  # NB_SERVER - NB_DEATHS
+        globals.status = "LEADER"
+        globals.leader = RANK
+        im_the_leader()
         #print("DEBUG - rank:" + str(RANK) + status+ ", term: "+str(term)+", leader:"+str(leader)+", candidat_loop devient un leader nb_vote:"+str(cpt)+"\n")
-
-    return leader, term, status
 
 
 # 3 possibilités de recv : heartbeat, imtheleader, iwanttobecandidate
-def follower_loop(leader: int, term: int):
+def follower_loop():
     """
         A follower can receive:
         "imtheleader" ==> save who is the leader
@@ -73,17 +71,9 @@ def follower_loop(leader: int, term: int):
                 # log part
                 if tag == CHANGES_TO_COMMIT:
                     uncommitted_logs.append(data)
-                    send_to_leader(leader, data)
+                    send_to_leader(data)
 
                 elif tag == LEADER_COMMIT:
-                    """len_committed_logs = data  # fix? TODO, bad implem i think
-
-                    if len_committed_logs > len(uncommitted_logs):
-                        # Then we missed some data (TODO, buggy if we missed one then received one after and the count is ok, maybe use HASHES)
-                        print("\nERROOOOOOOOOOOOOOOOOOOOOOOOR\n")
-
-                    committed_logs += uncommitted_logs[:len_committed_logs]
-                    uncommitted_logs = uncommitted_logs[len_committed_logs:]"""
                     committed_logs = data
                     # Write down to disk the log file
                     #print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
@@ -93,18 +83,18 @@ def follower_loop(leader: int, term: int):
                 # president election
                 elif "imtheleader" in data:
                     #print("DEBUG - rank:" + str(RANK) + ", term: "+str(term)+", leader:"+str(leader) + ", follower_loop imtheleader server: "+str(server)+"\n")
-                    leader = server
+                    globals.leader = server
                 elif "iwanttobecandidate" in data:  # leader == -1: #todo - + si leader est mort check le heartbeat
                     # vote once per term
                     term_candidate = int(data.split('=')[1])
-                    if term < term_candidate:
+                    if globals.term < term_candidate:
                         vote(server)
-                        term += 1
+                        globals.term += 1
                         #print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
                 elif "heartbeat_leader" in data:
                     # check if heartbeat send by current leader (and not by old leader who dead)
-                    if int(server) == leader:
-                        heartbeat_follower(leader)
+                    if int(server) == globals.leader:
+                        heartbeat_follower()
                         cpt_heartbeat_skip = 0
 
                 time_now = now()
@@ -114,11 +104,10 @@ def follower_loop(leader: int, term: int):
         cpt_heartbeat_skip += 1
         #if cpt_heartbeat_skip > 2:
             #print("cpt_heartbeat_skip of",RANK,"=",cpt_heartbeat_skip)
-    return leader, term
 
 
 # Heartbeat + Leader death
-def leader_loop(term: int):
+def leader_loop():
     """
         A leader can receive:
         "heartbeat_follower" ==> we stocked who answered
@@ -140,11 +129,11 @@ def leader_loop(term: int):
     list_followers_uncommitted_logs_internal = [[]] * NB_SERVER
     have_logs = False
 
-    # while pour eviter les appels recursifs
+    # while loop to avoid recursive calls
     while True:
         time_now = now()
         time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
-        heartbeat_leader(RANK, term)
+        heartbeat_leader()
         data = [0] * NB_SERVER
         while now() - time_now < time_out:
             server, recv, tag = irecv_data()
@@ -172,6 +161,8 @@ def leader_loop(term: int):
                     data[server - NB_CLIENT] = 1
             elif tag == RECOVERY_TAG:
                 comm.isend(committed_logs, dest=server, tag=RECOVERY_TAG)
+            elif tag == ASKING_LEADER:
+                comm.isend(None, dest=server, tag=ASKING_LEADER)
 
         if sum(data) == 0:
             break
@@ -183,9 +174,10 @@ def leader_loop(term: int):
         # Logs
         if have_logs:
             max_len = 0
-            num_ppl_agreeing = 0
+            num_ppl_agreeing = NB_SERVER
 
-            while num_ppl_agreeing < NB_SERVER / 2:
+            # This code is used to determine in `max_len` the maximum of logs we are able to commit
+            while num_ppl_agreeing > NB_SERVER / 2:
                 max_len += 1
 
                 # We count the num_ppl_agreeing
@@ -211,26 +203,23 @@ def leader_loop(term: int):
 
             # Send confirmation of commit to the sending client
             for client_rank in committed_logs_clients_uid:
-                comm.isend("commit_confirmation", dest=client_rank)
+                comm.isend(None, dest=client_rank, tag=CLIENT_COMMIT_CONFIRMATION)
 
             have_logs = False
 
-    status = "FOLLOWER"
-    return term, status
+    globals.status = "FOLLOWER"
 
 
-def time_loop(leader: int, term: int, status: str):
+def time_loop():
     """
         A proccess can be: candidat leader or follower
         A candidat and a leader can be a follower in their loop so we use if not else for the follower status
     """
-    if status == "CANDIDAT":
-        leader, term, status = candidat_loop(leader, status, term)
+    if globals.status == "CANDIDAT":
+        candidat_loop()
 
-    elif status == "LEADER":
-        term, status = leader_loop(term)
+    elif globals.status == "LEADER":
+        leader_loop()
 
-    if status == "FOLLOWER":
-        leader, term = follower_loop(leader, term)
-
-    return leader, term, status
+    if globals.status == "FOLLOWER":
+        follower_loop()

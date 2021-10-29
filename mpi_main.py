@@ -7,6 +7,7 @@
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 import sys
+import time
 
 # ------------------ IMPORT ----------------------
 from repl import *
@@ -31,18 +32,18 @@ def main():
         leader (of the term)
         '''
         # each server is a follower first
-        status = "FOLLOWER"
-        term = 0
-        leader = -1
+        globals.status = "FOLLOWER"
+        globals.term = 0
+        globals.leader = -1
         #print("DEBUG - rank:", RANK, status, "term: ",term, "leader:",leader,"START")
         while True:
-            leader, term, status = time_loop(leader, term, status)
+            time_loop()
 
             # if a server quit time_loop (no more heartbeat) so he want to be candidate
-            if status != "LEADER":
-                status = "CANDIDAT"
-                term += 1
-                election(RANK, term)
+            if globals.status != "LEADER":
+                globals.status = "CANDIDAT"
+                globals.term += 1
+                election(RANK)
 
         #print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
 
@@ -65,19 +66,46 @@ def main():
         with open(f"client_input_{RANK}.txt") as f:
 
             comm.recv(source=MPI.ANY_SOURCE, status=st)
-            leader = st.source
+            globals.leader = st.source
 
             for send_data in f.readlines():
                 send_data = send_data.strip('\n')
-                # send data #change CLIENT_MESSAGE_SIZE if you want a larger tab
 
-                #send_data = np.array([str(len(send_data))] + send_data, dtype=str)
-                #send_data = str(len(send_data)) + ' ' + send_data
-                comm.send(send_data, dest=leader, tag=CLIENT_TAG)
+                comm.send(send_data, dest=globals.leader, tag=CLIENT_TAG)
 
-                print("--DEBUG Client", RANK, "sent data:", send_data, "to leader:", leader)
+                is_data_committed = False
+                n_heartbeats_waited = 0
 
-                # TODO add leader response that the data have been committed (if not then resend ?)
+                while not is_data_committed:
+                    time_start = now()
+                    time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
+
+                    while True:  # now() - time_start < time_out:
+                        server, data, tag = irecv_data()
+
+                        if tag == CLIENT_COMMIT_CONFIRMATION:
+                            is_data_committed = True
+                            break
+
+                        # Ask for leader and resend info
+                        elif n_heartbeats_waited > 10:
+                            # Ask for leader
+                            isend_loop(RANK, None, tag_=ASKING_LEADER)
+
+                            st = MPI.Status()
+                            comm.recv(source=MPI.ANY_SOURCE, tag=ASKING_LEADER, status=st)
+                            globals.leader = st.source
+
+                            comm.send(send_data, dest=globals.leader, tag=CLIENT_TAG)
+
+                            n_heartbeats_waited = 0
+                            break
+
+                        n_heartbeats_waited += 1
+                        time.sleep(time_out / 1000)
+
+                print("--DEBUG Client", RANK, "sent data:", send_data, "to leader:", globals.leader)
+                time.sleep(3)
 
     # REPL's code
     else:

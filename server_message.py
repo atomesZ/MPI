@@ -2,7 +2,7 @@ from init_data import *
 import numpy as np
 
 
-def isend_loop(rank: int, msg: str, tag_: int = SERVER_TAG):
+def isend_loop(rank: int, msg, tag_: int = SERVER_TAG):
     """
         rank send msg to all other servers
     """
@@ -23,7 +23,6 @@ def listen_repl():
     data = comm.recv(source=REPL_UID)
 
     if "SPEED" in data:
-        globals.TIME_OUT
         if "LOW" in data:
             globals.TIME_OUT = [450, 600]
         elif "MEDIUM" in data:
@@ -33,14 +32,13 @@ def listen_repl():
         print("--DEBUG Receive", data, "- new TIME_OUT", globals.TIME_OUT)
     
     elif "CRASH" in data:
-        print("--DEBUG Receive CRASH")
+        print(f"--DEBUG {RANK} Received a CRASH")
         while True:
             data = comm.recv(source=REPL_UID)
             if "RECOVERY" in data:
-                print("--DEBUG Receive RECOVERY")
+                print(f"--DEBUG {RANK} Received a RECOVERY")
                 recover()
                 break
-                # TODO ask leader for summary
 
             elif "END" in data:
                 exit(0)
@@ -73,35 +71,40 @@ def irecv_data():
     return server, data, tag
 
 
-def election(rank_candidat: int, term: int):
-    isend_loop(rank_candidat, "iwanttobecandidate_term=" + str(term))
+def election(rank_candidat: int):
+    isend_loop(rank_candidat, "iwanttobecandidate_term=" + str(globals.term))
 
 
-def im_the_leader(rank_leader: int):
-    isend_loop(rank_leader, "imtheleader")
+def im_the_leader():
+    isend_loop(globals.leader, "imtheleader")
 
 
-def heartbeat_leader(rank_leader: int, term: int):
-    isend_loop(rank_leader, "heartbeat_leader" + str(term))
+def heartbeat_leader():
+    isend_loop(globals.leader, "heartbeat_leader" + str(globals.term))
 
 
-def heartbeat_follower(rank_leader: int):
-    comm.isend("heartbeat_follower", dest=rank_leader, tag=SERVER_TAG)
+def heartbeat_follower():
+    comm.isend("heartbeat_follower", dest=globals.leader, tag=SERVER_TAG)
 
 
 def vote(rank_candidat: int):
     comm.isend("vote", dest=rank_candidat, tag=SERVER_TAG)
 
 
-def send_to_leader(rank_leader: int, msg: str, tag_: int = FOLLOWER_ACKNOWLEDGE_CHANGES):
-    comm.isend(msg, dest=rank_leader, tag=tag_)
+def send_to_leader(msg: str, tag_: int = FOLLOWER_ACKNOWLEDGE_CHANGES):
+    comm.isend(msg, dest=globals.leader, tag=tag_)
 
 
 def recover():
+    if RANK < NB_CLIENT:
+        return
+
     # Ask for recovery
     isend_loop(RANK, None, tag_=RECOVERY_TAG)
 
-    committed_logs = comm.recv(source=MPI.ANY_SOURCE, tag=RECOVERY_TAG)
+    st = MPI.Status()
+    committed_logs = comm.recv(source=MPI.ANY_SOURCE, tag=RECOVERY_TAG, status=st)
+    globals.leader = st.source
 
     if committed_logs:
         with open(f"log_server_{RANK}.txt", "w") as f:
