@@ -69,11 +69,11 @@ def follower_loop():
 
             if data is not None:
                 # log part
-                if tag == CHANGES_TO_COMMIT:
+                if server == globals.leader and tag == CHANGES_TO_COMMIT:
                     uncommitted_logs.append(data)
                     send_to_leader(data)
 
-                elif tag == LEADER_COMMIT:
+                elif server == globals.leader and tag == LEADER_COMMIT:
                     committed_logs = data
                     # Write down to disk the log file
                     #print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
@@ -91,7 +91,7 @@ def follower_loop():
                         vote(server)
                         globals.term += 1
                         #print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
-                elif "heartbeat_leader" in data:
+                elif server == globals.leader and "heartbeat_leader" in data:
                     # check if heartbeat send by current leader (and not by old leader who dead)
                     if int(server) == globals.leader:
                         heartbeat_follower()
