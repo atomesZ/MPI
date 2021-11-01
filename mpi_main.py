@@ -47,6 +47,7 @@ def main():
             data = comm.recv(source=REPL_UID)
             if "START" in data:
                 print("--DEBUG Client", RANK, "start")
+                time.sleep(random.uniform(0, 5.0))
                 break
             elif "END" in data:
                 exit(0)

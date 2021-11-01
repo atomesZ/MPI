@@ -37,7 +37,6 @@ def listen_repl():
             data = comm.recv(source=REPL_UID)
             if "RECOVERY" in data:
                 print(f"--DEBUG {RANK} Received a RECOVERY")
-                recover()
                 break
 
             elif "END" in data:
@@ -84,7 +83,7 @@ def heartbeat_leader():
 
 
 def heartbeat_follower():
-    comm.isend("heartbeat_follower", dest=globals.leader, tag=SERVER_TAG)
+    comm.isend(globals.len_commit_logs, dest=globals.leader, tag=HEARTBEAT_FOLLOWER)
 
 
 def vote(rank_candidat: int):
@@ -93,19 +92,3 @@ def vote(rank_candidat: int):
 
 def send_to_leader(msg: str, tag_: int = FOLLOWER_ACKNOWLEDGE_CHANGES):
     comm.isend(msg, dest=globals.leader, tag=tag_)
-
-
-def recover():
-    if RANK < NB_CLIENT:
-        return
-
-    # Ask for recovery
-    isend_loop(RANK, None, tag_=RECOVERY_TAG)
-
-    st = MPI.Status()
-    globals.committed_logs = comm.recv(source=MPI.ANY_SOURCE, tag=RECOVERY_TAG, status=st)
-    globals.leader = st.source
-
-    if globals.committed_logs:
-        with open(f"log_server_{RANK}.txt", "w") as f:
-            f.writelines([f"{line}\n" for line in globals.committed_logs])

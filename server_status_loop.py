@@ -73,12 +73,17 @@ def follower_loop():
                     send_to_leader(data)
 
                 elif server == globals.leader and tag == LEADER_COMMIT:
-                    globals.committed_logs += data
                     # Write down to disk the log file
                     with open(f"log_server_{RANK}.txt", "a") as f:
                         f.writelines([f"{line}\n" for line in data])
+                        globals.len_commit_logs += len(data)
 
-                # president election
+                elif server == globals.leader and tag == RECOVERY_TAG:
+                    with open(f"log_server_{RANK}.txt", "w") as f:
+                        f.writelines(data)
+                        globals.len_commit_logs = len(data)
+
+                # leader election
                 elif "imtheleader" in data:
                     globals.leader = server
                 elif "iwanttobecandidate" in data:  # leader == -1: #todo - + si leader est mort check le heartbeat
@@ -91,6 +96,8 @@ def follower_loop():
                     # check if heartbeat send by current leader (and not by an old leader who was dead)
                     heartbeat_follower()
                     cpt_heartbeat_skip = 0
+
+
 
                 time_now = now()
                 time_out2 = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
@@ -117,7 +124,6 @@ def leader_loop():
     print("--DEBUG LEADER_LOOP ", RANK, "TIME_OUT:", globals.TIME_OUT)
     isend_loop_client("imtheleader")
 
-    committed_logs_clients_uid = []
     uncommitted_logs = []
     uncommitted_logs_clients_uid = []
     list_followers_uncommitted_logs_internal = [[]] * NB_SERVER
@@ -144,15 +150,17 @@ def leader_loop():
                     have_logs = True
 
                 elif tag == FOLLOWER_ACKNOWLEDGE_CHANGES:
-                    list_followers_uncommitted_logs_internal[server - NB_CLIENT].append(recv)  # recv tableau de uncommited
+                    # recv tableau de uncommited
+                    list_followers_uncommitted_logs_internal[server - NB_CLIENT].append(recv)
                     have_logs = True
 
-                elif "heartbeat_follower" in recv:
+                elif tag == HEARTBEAT_FOLLOWER:
                     data[server - NB_CLIENT] = 1
-            elif tag == RECOVERY_TAG:
-                comm.isend(globals.committed_logs, dest=server, tag=RECOVERY_TAG)
-            elif tag == ASKING_LEADER:
-                comm.isend(None, dest=server, tag=ASKING_LEADER)
+
+                    # if the follower is late in his logs, sends him the good logs
+                    if recv < globals.len_commit_logs:
+                        with open(f"log_server_{RANK}.txt", "r") as f:
+                            comm.isend(f.readlines(), dest=server, tag=RECOVERY_TAG)
 
         # If no one answered the heartbeat, then we are not leader anymore
         if sum(data) == 0:
@@ -186,13 +194,11 @@ def leader_loop():
             # Write down to disk the log file
             with open(f"log_server_{RANK}.txt", "a") as f:
                 f.writelines([f"{line}\n" for line in uncommitted_logs[:max_len]])
+                globals.len_commit_logs += len(uncommitted_logs[:max_len])
 
             # Send confirmation of commit to the sending client
-            for client_rank in committed_logs_clients_uid:
+            for client_rank in uncommitted_logs_clients_uid[:max_len]:
                 comm.isend(None, dest=client_rank, tag=CLIENT_COMMIT_CONFIRMATION)
-
-            globals.committed_logs += uncommitted_logs[:max_len]
-            committed_logs_clients_uid += uncommitted_logs_clients_uid[:max_len]
 
             uncommitted_logs = uncommitted_logs[max_len:]
             uncommitted_logs_clients_uid = uncommitted_logs_clients_uid[max_len:]
