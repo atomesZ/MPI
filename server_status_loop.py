@@ -73,10 +73,10 @@ def follower_loop():
                     send_to_leader(data)
 
                 elif server == globals.leader and tag == LEADER_COMMIT:
-                    globals.committed_logs = data
+                    globals.committed_logs += data
                     # Write down to disk the log file
-                    with open(f"log_server_{RANK}.txt", "w") as f:
-                        f.writelines([f"{line}\n" for line in globals.committed_logs])
+                    with open(f"log_server_{RANK}.txt", "a") as f:
+                        f.writelines([f"{line}\n" for line in data])
 
                 # president election
                 elif "imtheleader" in data:
@@ -141,8 +141,6 @@ def leader_loop():
                     # Send logs to followers
                     isend_loop(RANK, uncommitted_logs, CHANGES_TO_COMMIT)  # check
 
-                    globals.committed_logs += uncommitted_logs
-                    uncommitted_logs = []
                     have_logs = True
 
                 elif tag == FOLLOWER_ACKNOWLEDGE_CHANGES:
@@ -183,24 +181,21 @@ def leader_loop():
             max_len -= 1
             # max len logs
 
-            # isend_loop(RANK, uncommitted_logs[:max_len], LEADER_COMMIT)
+            isend_loop(RANK, uncommitted_logs[:max_len], LEADER_COMMIT)
+
+            # Write down to disk the log file
+            with open(f"log_server_{RANK}.txt", "a") as f:
+                f.writelines([f"{line}\n" for line in uncommitted_logs[:max_len]])
+
+            # Send confirmation of commit to the sending client
+            for client_rank in committed_logs_clients_uid:
+                comm.isend(None, dest=client_rank, tag=CLIENT_COMMIT_CONFIRMATION)
 
             globals.committed_logs += uncommitted_logs[:max_len]
             committed_logs_clients_uid += uncommitted_logs_clients_uid[:max_len]
 
             uncommitted_logs = uncommitted_logs[max_len:]
             uncommitted_logs_clients_uid = uncommitted_logs_clients_uid[max_len:]
-
-            isend_loop(RANK, globals.committed_logs, LEADER_COMMIT)
-
-
-            # Write down to disk the log file
-            with open(f"log_server_{RANK}.txt", "w") as f:
-                f.writelines([f"{line}\n" for line in globals.committed_logs])
-
-            # Send confirmation of commit to the sending client
-            for client_rank in committed_logs_clients_uid:
-                comm.isend(None, dest=client_rank, tag=CLIENT_COMMIT_CONFIRMATION)
 
             have_logs = False
 
