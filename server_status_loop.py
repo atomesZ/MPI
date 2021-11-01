@@ -58,7 +58,6 @@ def follower_loop():
         a follower votes once per term
     """
     print("--DEBUG FOLLOWER", RANK, "TIME_OUT:", globals.TIME_OUT)
-    committed_logs = []
     uncommitted_logs = []
     cpt_heartbeat_skip = 0
     while cpt_heartbeat_skip < MAX_HEARTBEAT_SKIP:
@@ -74,15 +73,13 @@ def follower_loop():
                     send_to_leader(data)
 
                 elif server == globals.leader and tag == LEADER_COMMIT:
-                    committed_logs = data
+                    globals.committed_logs = data
                     # Write down to disk the log file
-                    #print("tag == LEADER_COMMIT committed_logs:",committed_logs, "committed_logs[0]:",committed_logs[0])
                     with open(f"log_server_{RANK}.txt", "w") as f:
-                        f.writelines([f"{line}\n" for line in committed_logs])
+                        f.writelines([f"{line}\n" for line in globals.committed_logs])
 
                 # president election
                 elif "imtheleader" in data:
-                    #print("DEBUG - rank:" + str(RANK) + ", term: "+str(term)+", leader:"+str(leader) + ", follower_loop imtheleader server: "+str(server)+"\n")
                     globals.leader = server
                 elif "iwanttobecandidate" in data:  # leader == -1: #todo - + si leader est mort check le heartbeat
                     # vote once per term
@@ -90,12 +87,10 @@ def follower_loop():
                     if globals.term < term_candidate:
                         vote(server)
                         globals.term += 1
-                        #print("DEBUG - rank:" + str(RANK) + "term: "+str(term)+"leader:"+str(leader)+"follower_loop a vote"+str(server)+"\n")
                 elif server == globals.leader and "heartbeat_leader" in data:
-                    # check if heartbeat send by current leader (and not by old leader who dead)
-                    if int(server) == globals.leader:
-                        heartbeat_follower()
-                        cpt_heartbeat_skip = 0
+                    # check if heartbeat send by current leader (and not by an old leader who was dead)
+                    heartbeat_follower()
+                    cpt_heartbeat_skip = 0
 
                 time_now = now()
                 time_out2 = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
@@ -122,7 +117,6 @@ def leader_loop():
     print("--DEBUG LEADER_LOOP ", RANK, "TIME_OUT:", globals.TIME_OUT)
     isend_loop_client("imtheleader")
 
-    committed_logs = []
     committed_logs_clients_uid = []
     uncommitted_logs = []
     uncommitted_logs_clients_uid = []
@@ -138,18 +132,16 @@ def leader_loop():
         while now() - time_now < time_out:
             server, recv, tag = irecv_data()
             if recv is not None:
-                #print("leader_loop rank: ", RANK, " data: ",recv, "from ", server)
 
                 if tag == CLIENT_TAG:
                     client_rank = server
                     # We put the client_uid in uncommitted logs
                     uncommitted_logs.append(recv)
                     uncommitted_logs_clients_uid.append(client_rank)
-                    #print(f"Leader received a data from client: {client_rank}")
                     # Send logs to followers
                     isend_loop(RANK, uncommitted_logs, CHANGES_TO_COMMIT)  # check
 
-                    committed_logs += uncommitted_logs
+                    globals.committed_logs += uncommitted_logs
                     uncommitted_logs = []
                     have_logs = True
 
@@ -160,11 +152,13 @@ def leader_loop():
                 elif "heartbeat_follower" in recv:
                     data[server - NB_CLIENT] = 1
             elif tag == RECOVERY_TAG:
-                comm.isend(committed_logs, dest=server, tag=RECOVERY_TAG)
+                comm.isend(globals.committed_logs, dest=server, tag=RECOVERY_TAG)
             elif tag == ASKING_LEADER:
                 comm.isend(None, dest=server, tag=ASKING_LEADER)
 
+        # If no one answered the heartbeat, then we are not leader anymore
         if sum(data) == 0:
+            globals.status = "FOLLOWER"
             break
 
         elif len(data) - 1 != sum(data):
@@ -189,25 +183,26 @@ def leader_loop():
             max_len -= 1
             # max len logs
 
-            committed_logs += uncommitted_logs[:max_len]
+            # isend_loop(RANK, uncommitted_logs[:max_len], LEADER_COMMIT)
+
+            globals.committed_logs += uncommitted_logs[:max_len]
             committed_logs_clients_uid += uncommitted_logs_clients_uid[:max_len]
 
             uncommitted_logs = uncommitted_logs[max_len:]
             uncommitted_logs_clients_uid = uncommitted_logs_clients_uid[max_len:]
 
-            isend_loop(RANK, committed_logs, LEADER_COMMIT)
+            isend_loop(RANK, globals.committed_logs, LEADER_COMMIT)
+
 
             # Write down to disk the log file
             with open(f"log_server_{RANK}.txt", "w") as f:
-                f.writelines([f"{line}\n" for line in committed_logs])
+                f.writelines([f"{line}\n" for line in globals.committed_logs])
 
             # Send confirmation of commit to the sending client
             for client_rank in committed_logs_clients_uid:
                 comm.isend(None, dest=client_rank, tag=CLIENT_COMMIT_CONFIRMATION)
 
             have_logs = False
-
-    globals.status = "FOLLOWER"
 
 
 def time_loop():

@@ -103,9 +103,9 @@ def recover():
     isend_loop(RANK, None, tag_=RECOVERY_TAG)
 
     st = MPI.Status()
-    committed_logs = comm.recv(source=MPI.ANY_SOURCE, tag=RECOVERY_TAG, status=st)
+    globals.committed_logs = comm.recv(source=MPI.ANY_SOURCE, tag=RECOVERY_TAG, status=st)
     globals.leader = st.source
 
-    if committed_logs:
+    if globals.committed_logs:
         with open(f"log_server_{RANK}.txt", "w") as f:
-            f.writelines([f"{line}\n" for line in committed_logs])
+            f.writelines([f"{line}\n" for line in globals.committed_logs])

@@ -11,6 +11,7 @@ log_files = list(filter(r.match, files))
 client_input_files = list(filter(r_client.match, files))
 
 errors = []
+errors_client = []
 
 if len(log_files) == 0:
     errors = ["There are no logfiles saved.\n"]
@@ -26,7 +27,6 @@ else:
 
     # Check that all client_inputs are in the log_files
 
-    errors_client = []
     for client_file in client_input_files:
         errors_per_cli = []
         with open(client_file) as f_client:

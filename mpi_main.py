@@ -31,11 +31,6 @@ def main():
         term (counter : nb of election)
         leader (of the term)
         '''
-        # each server is a follower first
-        globals.status = "FOLLOWER"
-        globals.term = 0
-        globals.leader = -1
-        #print("DEBUG - rank:", RANK, status, "term: ",term, "leader:",leader,"START")
         while True:
             time_loop()
 
@@ -44,8 +39,6 @@ def main():
                 globals.status = "CANDIDAT"
                 globals.term += 1
                 election(RANK)
-
-        #print("DEBUG - rank:" + str(rank) + status+ " term: "+str(term)+" leader: "+str(leader)+" FINISH\n")
 
     # Clients code
     elif if_client:
@@ -58,9 +51,6 @@ def main():
             elif "END" in data:
                 exit(0)
 
-        # TODO étape 3, redemander qui est le leader frequemment (ou du moins écouter pour une nouvelle election)
-        #while(True): #envoie plsrs msg
-        # demande qui est le leader ?
         st = MPI.Status()
 
         with open(f"client_input_{RANK}.txt") as f:
@@ -77,17 +67,22 @@ def main():
                 n_heartbeats_waited = 0
 
                 while not is_data_committed:
-                    time_start = now()
                     time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
 
-                    while True:  # now() - time_start < time_out:
+                    while True:
                         server, data, tag = irecv_data()
 
                         if tag == CLIENT_COMMIT_CONFIRMATION:
                             is_data_committed = True
                             break
 
-                        # Ask for leader and resend info
+                        # If leader changed, update and resend data
+                        elif data is not None and "imtheleader" in data:
+                            globals.leader = server
+                            comm.send(send_data, dest=globals.leader, tag=CLIENT_TAG)
+                            n_heartbeats_waited = 0
+
+                        # Ask for leader and resend data
                         elif n_heartbeats_waited > 10:
                             # Ask for leader
                             isend_loop(RANK, None, tag_=ASKING_LEADER)
