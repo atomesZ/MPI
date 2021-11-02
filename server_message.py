@@ -3,6 +3,8 @@ from init_data import *
 import numpy as np
 import csv
 
+from mpi_main import PERFS
+
 
 def isend_loop(rank: int, msg, tag_: int = SERVER_TAG):
     """
@@ -79,7 +81,8 @@ def listen_repl():
         pass  # process vivant
 
     elif "END" in data:
-        write_perfs()
+        if PERFS:
+            write_perfs()
         exit(0)
 
     return data
