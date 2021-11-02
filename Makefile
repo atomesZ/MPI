@@ -30,11 +30,11 @@ test:
 	python3 testsuite.py
 
 # Debug
-debug: install_requirements
+debug: clean install_requirements
 	python3 main.py debug
 
 # Testsuite & Debug
-check_debug: clean debug
+check_debug: debug
 	@echo ""
 	python3 testsuite.py
 

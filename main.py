@@ -11,14 +11,19 @@ def generate_random_data(nbr_clients: int) -> list:
     :param nbr_clients:
     :return: data for the clients
     """
+    if nbr_clients == 0:
+        return []
     lengths = random.choices(range(10, 30), k=nbr_clients * 3)
     S = []
     for length in lengths:
         S.append(''.join(random.sample(string.ascii_letters, k=length)))
     S = list(set(S))
     list_separators_for_clients = np.sort(random.sample(range(1, len(lengths)), nbr_clients - 1))
-    res = [S[:list_separators_for_clients[0]], S[list_separators_for_clients[len(list_separators_for_clients) - 1]:]]
-    prev_sep = list_separators_for_clients[0]
+    res = [S]
+    prev_sep = 0
+    if nbr_clients > 1:
+        res = [S[:list_separators_for_clients[0]], S[list_separators_for_clients[len(list_separators_for_clients) - 1]:]]
+        prev_sep = list_separators_for_clients[0]
     for i, sep in enumerate(list_separators_for_clients):
         if i == 0:
             continue
