@@ -18,8 +18,9 @@ def candidat_loop():
         "iwanttobecandidat" ==> a candidat ask him to vote for him
 
     """
-    print("--DEBUG CANDIDAT", RANK, "TIME_OUT:", globals.TIME_OUT)
-    #print("DEBUG - rank:" + str(rank) + status+ "term: "+str(term)+"leader:"+str(leader)+"candidat_loop START"+"\n")
+    if DEBUG:
+        print("--DEBUG CANDIDAT", RANK, "TIME_OUT:", globals.TIME_OUT)
+        #print("DEBUG - rank:" + str(rank) + status+ "term: "+str(term)+"leader:"+str(leader)+"candidat_loop START"+"\n")
     time_now = now()
     time_out = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
     # votes counter, init with 1 (vote for himself)
@@ -57,7 +58,8 @@ def follower_loop():
         "iwanttobecandidat" ==> a candidat ask him to vote for him, vote for him (if possible)
         a follower votes once per term
     """
-    print("--DEBUG FOLLOWER", RANK, "TIME_OUT:", globals.TIME_OUT)
+    if DEBUG:
+        print("--DEBUG FOLLOWER", RANK, "TIME_OUT:", globals.TIME_OUT)
     uncommitted_logs = []
     cpt_heartbeat_skip = 0
     while cpt_heartbeat_skip < MAX_HEARTBEAT_SKIP:
@@ -121,7 +123,8 @@ def leader_loop():
             CLIENT_TAG : get data client and send to all server
             FOLLOWER_ACKNOWLEDGE_CHANGES : good receive by followers -> write logs
     """
-    print("--DEBUG LEADER_LOOP ", RANK, "TIME_OUT:", globals.TIME_OUT)
+    if DEBUG:
+        print("--DEBUG LEADER_LOOP ", RANK, "TIME_OUT:", globals.TIME_OUT)
     isend_loop_client("imtheleader")
 
     uncommitted_logs = []

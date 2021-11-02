@@ -16,7 +16,7 @@ from repl import *
 
 NB_CLIENT = int(sys.argv[1])
 NB_SERVER = int(sys.argv[2])
-
+DEBUG = sys.argv[3] == "True"
 
 def main():
     if SIZE != NB_CLIENT + NB_SERVER + 1:
@@ -46,7 +46,8 @@ def main():
             # REPL Start:
             data = comm.recv(source=REPL_UID)
             if "START" in data:
-                print("--DEBUG Client", RANK, "start")
+                if DEBUG:
+                    print("--DEBUG Client", RANK, "start")
                 time.sleep(random.uniform(0, 5.0))
                 break
             elif "END" in data:
@@ -99,8 +100,8 @@ def main():
 
                         n_heartbeats_waited += 1
                         time.sleep(time_out / 1000)
-
-                print("--DEBUG Client", RANK, "sent data:", send_data, "to leader:", globals.leader)
+                if DEBUG:
+                    print("--DEBUG Client", RANK, "sent data:", send_data, "to leader:", globals.leader)
                 time.sleep(random.uniform(2.0, 4.0))
 
     # REPL's code

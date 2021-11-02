@@ -29,21 +29,25 @@ def listen_repl():
             globals.TIME_OUT = [300, 450]
         else:  # HIGH
             globals.TIME_OUT = [150, 300]
-        print("--DEBUG Receive", data, "- new TIME_OUT", globals.TIME_OUT)
-    
+        if DEBUG:
+            print("--DEBUG Receive", data, "- new TIME_OUT", globals.TIME_OUT)
+
     elif "CRASH" in data:
-        print(f"--DEBUG {RANK} Received a CRASH")
+        if DEBUG:
+            print(f"--DEBUG {RANK} Received a CRASH")
         while True:
             data = comm.recv(source=REPL_UID)
             if "RECOVERY" in data:
-                print(f"--DEBUG {RANK} Received a RECOVERY")
+                if DEBUG:
+                    print(f"--DEBUG {RANK} Received a RECOVERY")
                 break
 
             elif "END" in data:
                 exit(0)
 
     elif "RECOVERY" in data:
-        print("--DEBUG Receive RECOVERY for a living process")
+        if DEBUG:
+            print("--DEBUG Receive RECOVERY for a living process")
         pass  # process vivant
 
     elif "END" in data:

@@ -29,6 +29,16 @@ check_testsuite: clean all
 test:
 	python3 testsuite.py
 
+# Debug
+debug: install_requirements
+	python3 main.py debug
+
+# Testsuite & Debug
+check_debug: clean debug
+	@echo ""
+	python3 testsuite.py
+
+
 # Remove all generated elements by the main
 clean:
 	@rm log_server_*.txt client_input_*.txt 2> /dev/null || true

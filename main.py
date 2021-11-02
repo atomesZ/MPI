@@ -1,3 +1,4 @@
+import sys
 import os
 import random
 import numpy as np
@@ -32,6 +33,8 @@ def main():
 
     n_nodes = n_clients + n_servers + 1
 
+    debug = (len(sys.argv) > 1) and (sys.argv[1] == "debug")
+
     # Generate clients' data to send
     clients_data = generate_random_data(n_clients)
     for client_rank in range(n_clients):
@@ -42,7 +45,7 @@ def main():
               f"--stdin {n_nodes - 1} "
               f"-n {n_nodes} "
               f"--allow-run-as-root "
-              f"python3 mpi_main.py {n_clients} {n_servers}")
+              f"python3 mpi_main.py {n_clients} {n_servers} {debug}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # ------------------ PREPARE DATA ----------------------
 
 from mpi4py import MPI
-from mpi_main import NB_CLIENT, NB_SERVER
+from mpi_main import NB_CLIENT, NB_SERVER, DEBUG
 import globals
 
 comm = MPI.COMM_WORLD
@@ -27,3 +27,4 @@ if_client = RANK < NB_CLIENT
 if_server = NB_CLIENT <= RANK < SIZE - 1
 
 REPL_UID = SIZE - 1
+
