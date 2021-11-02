@@ -26,17 +26,19 @@ def isend_loop_client(msg: str, tag_: int = CLIENT_TAG):
 #Write Performance Measurement
 def write_perfs():
     if if_server:
-        header = ['STATUS','TERM','RECV HEARTBEAT', 'SEND HEARTBEAT',
-                  'RECV IWANTTOBECANDIDATE', 'SEND IWANTTOBECANDIDATE',
-                  'SEND VOTE', 'RECV VOTE',
+        header = ['STATUS','TERM','RECV IWANTTOBECANDIDATE','SEND IWANTTOBECANDIDATE',
+                  'RECV VOTE', 'SEND VOTE',
                   'RECV IMTHELEADER', 'SEND IMTHELEADER',
+                  'RECV HEARTBEAT', 'SEND HEARTBEAT',
                   'TOTAL RECV', 'TOTAL SEND', 'TOTAL MSG']
         total_recv = globals.recv_heartbeat + globals.recv_candidate + globals.recv_imleader
         total_send = globals.send_heartbeat + globals.send_vote + globals.send_imleader
         total_msg = total_send + total_recv
-        data = [globals.status, globals.term, globals.recv_heartbeat, globals.send_heartbeat,
-                globals.recv_candidate, globals.send_candidate, globals.recv_vote, globals.send_vote,
-                globals.recv_imleader, globals.send_imleader, total_recv, total_send, total_msg]
+        data = [globals.status, globals.term, globals.recv_candidate, globals.send_candidate, 
+                globals.recv_vote, globals.send_vote,
+                globals.recv_imleader, globals.send_imleader,
+                globals.recv_heartbeat, globals.send_heartbeat,
+                total_recv, total_send, total_msg]
         if DEBUG:
             print("--DEBUG : write perfs of server:", RANK)
         file = "perfs/perfs_"+str(RANK)+".csv"
