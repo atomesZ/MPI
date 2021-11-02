@@ -41,6 +41,7 @@ def main():
     os.system(f"mpiexec --host localhost:{n_nodes} "
               f"--stdin {n_nodes - 1} "
               f"-n {n_nodes} "
+              f"--allow-run-as-root "
               f"python3 mpi_main.py {n_clients} {n_servers}")
 
 

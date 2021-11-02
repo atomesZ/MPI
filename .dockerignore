@@ -1,0 +1,6 @@
+.git
+.idea
+log_server_*.txt
+client_input_*.txt
+__pycache__
+*.swp
