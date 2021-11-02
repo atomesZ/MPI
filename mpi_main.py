@@ -55,7 +55,7 @@ def main():
 
         st = MPI.Status()
 
-        with open(f"client_input_{RANK}.txt") as f:
+        with open(f"clients_input/client_input_{RANK}.txt") as f:
 
             comm.recv(source=MPI.ANY_SOURCE, status=st)
             globals.leader = st.source

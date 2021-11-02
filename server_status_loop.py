@@ -81,12 +81,12 @@ def follower_loop():
 
                 elif server == globals.leader and tag == LEADER_COMMIT:
                     # Write down to disk the log file
-                    with open(f"log_server_{RANK}.txt", "a") as f:
+                    with open(f"logs_server/log_server_{RANK}.txt", "a") as f:
                         f.writelines([f"{line}\n" for line in data])
                         globals.len_commit_logs += len(data)
 
                 elif server == globals.leader and tag == RECOVERY_TAG:
-                    with open(f"log_server_{RANK}.txt", "w") as f:
+                    with open(f"logs_server/log_server_{RANK}.txt", "w") as f:
                         f.writelines(data)
                         globals.len_commit_logs = len(data)
 
@@ -169,7 +169,7 @@ def leader_loop():
                     globals.recv_heartbeat += 1
                     # if the follower is late in his logs, sends him the good logs
                     if recv < globals.len_commit_logs:
-                        with open(f"log_server_{RANK}.txt", "r") as f:
+                        with open(f"logs_server/log_server_{RANK}.txt", "r") as f:
                             comm.isend(f.readlines(), dest=server, tag=RECOVERY_TAG)
 
         # If no one answered the heartbeat, then we are not leader anymore
@@ -202,7 +202,7 @@ def leader_loop():
             isend_loop(RANK, uncommitted_logs[:max_len], LEADER_COMMIT)
 
             # Write down to disk the log file
-            with open(f"log_server_{RANK}.txt", "a") as f:
+            with open(f"logs_server/log_server_{RANK}.txt", "a") as f:
                 f.writelines([f"{line}\n" for line in uncommitted_logs[:max_len]])
                 globals.len_commit_logs += len(uncommitted_logs[:max_len])
 

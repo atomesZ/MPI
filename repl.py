@@ -57,12 +57,13 @@ def end_all_nodes():
         comm.isend("END", dest=processus_uid, tag=REPL_TAG)
     exit(0)
 
+
 def main_repl():
     while True:
         try:
             command = input("Enter a command:\n")
         except EOFError:
-            print(" To exit program, it is better ti use the REPL's command: END instead of Ctrl+C")
+            print(" To exit program, it is better to use the REPL's command: END instead of Ctrl+C")
             exit(0)
 
         if "START" in command:

@@ -40,5 +40,4 @@ check_debug: debug
 
 # Remove all generated elements by the main
 clean:
-	@rm log_server_*.txt client_input_*.txt 2> /dev/null || true
-	@rm -rf perfs 2> /dev/null || true
+	@rm -rf logs_server clients_input perfs 2> /dev/null || true
