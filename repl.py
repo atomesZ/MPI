@@ -60,7 +60,11 @@ def end_all_nodes():
 
 def main_repl():
     while True:
-        command = input("Enter a command:\n")
+        try:
+            command = input("Enter a command:\n")
+        except EOFError:
+            print(" To exit program, it is better ti use the REPL's command: END instead of Ctrl+C")
+            exit(0)
 
         if "START" in command:
             start_clients()
