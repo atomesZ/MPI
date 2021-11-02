@@ -25,7 +25,7 @@ def main():
     dataFollower = data.describe().iloc[[1,3,7], :]
 
     #Write in csv file
-    dataLeader.to_csv(path+'LeaderDescribe.csv',index=True)
+    dataLeader.to_csv(path+'LeaderDescribe.csv',index=False)
     dataFollower.to_csv(path+'FollowerDescribe.csv',index=True)
 
 if __name__ == "__main__":

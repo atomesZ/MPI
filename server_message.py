@@ -24,11 +24,11 @@ def isend_loop_client(msg: str, tag_: int = CLIENT_TAG):
 #Write Performance Measurement
 def write_perfs():
     if if_server:
-        header = ['STATUS','TERM','RECV_HEARTBEAT', 'SEND_HEARTBEAT',
-                  'RECV_IWANTTOBECANDIDATE', 'SEND_IWANTTOBECANDIDATE',
-                  'SEND_VOTE', 'RECV_VOTE',
-                  'RECV_IMTHELEADER', 'SEND_IMTHELEADER',
-                  'TOTAL_RECV', 'TOTAL_SEND', 'TOTAL_MSG_WITHOUT_HEARTBEAT', 'TOTAL_MSG']
+        header = ['STATUS','TERM','RECV HEARTBEAT', 'SEND HEARTBEAT',
+                  'RECV IWANTTOBECANDIDATE', 'SEND IWANTTOBECANDIDATE',
+                  'SEND VOTE', 'RECV VOTE',
+                  'RECV IMTHELEADER', 'SEND IMTHELEADER',
+                  'TOTAL RECV', 'TOTAL SEND', 'TOTAL MSG WITHOUT HEARTBEAT', 'TOTAL MSG']
         total_recv = globals.recv_heartbeat + globals.recv_candidate + globals.recv_imleader
         total_send = globals.send_heartbeat + globals.send_vote + globals.send_imleader
         total_msg = total_send + total_recv
