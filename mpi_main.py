@@ -102,7 +102,7 @@ def main():
                         time.sleep(time_out / 1000)
                 if DEBUG:
                     print("--DEBUG Client", RANK, "sent data:", send_data, "to leader:", globals.leader)
-                time.sleep(random.uniform(2.0, 4.0))
+                time.sleep(random.uniform(globals.TIME_OUT[0] / 100, globals.TIME_OUT[1] / 100))
 
     # REPL's code
     else:

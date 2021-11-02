@@ -6,7 +6,7 @@ NC=\e[0m
 .PHONY: all install_requirements check check_testsuite clean test
 
 # Simple execuction of the main
-all: install_requirements
+all: clean install_requirements
 	python3 main.py
 
 # Install python dependencies
@@ -30,11 +30,11 @@ test:
 	python3 testsuite.py
 
 # Debug
-debug: install_requirements
+debug: clean install_requirements
 	python3 main.py debug
 
 # Testsuite & Debug
-check_debug: clean debug
+check_debug: debug
 	@echo ""
 	python3 testsuite.py
 

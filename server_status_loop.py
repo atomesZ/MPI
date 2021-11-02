@@ -47,7 +47,6 @@ def candidat_loop():
             # else -> iwanttobecandidate -> skip
 
     # if majority ==> he becomes leader
-    # TODO
     if cpt > np.floor(NB_SERVER / 2):  # NB_SERVER - NB_DEATHS
         globals.status = "LEADER"
         globals.leader = RANK
@@ -130,6 +129,7 @@ def leader_loop():
             CLIENT_TAG : get data client and send to all server
             FOLLOWER_ACKNOWLEDGE_CHANGES : good receive by followers -> write logs
     """
+    print("Leader : ", RANK)
     if DEBUG:
         print("--DEBUG LEADER_LOOP ", RANK, "TIME_OUT:", globals.TIME_OUT)
     isend_loop_client("imtheleader")
