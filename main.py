@@ -42,7 +42,8 @@ def main():
     perfs = (len(sys.argv) > 1) and ((sys.argv[1] == "perfs") or (sys.argv[2] == "perfs"))
 
     # Create dir
-    os.makedirs('perfs', exist_ok=True)
+    if perfs:
+        os.makedirs('perfs', exist_ok=True)
     os.mkdir('clients_input')
     os.mkdir('logs_server')
 

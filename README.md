@@ -32,7 +32,7 @@ Affiche les étapes intermédiaires :
 * Envoi d'une donnée par un client et à quel leader
 
 ### Mesure de performances
-Pour lancer les mesures de performances:  `make perfs`
+Pour lancer les mesures de performances:  `make perfs`  
 Pour lancer les mesures de performances et le debug:  `make perfs_debug`
 * Création du dossier perfs répertoriant les données de chaque serveur. 
 * Appel du fichier performance\_measurement.py qui analyse et regroupe les résultats des fichiers de perfs, en séparant les données du Leader et celles des Followers.
