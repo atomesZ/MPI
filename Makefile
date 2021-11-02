@@ -3,7 +3,7 @@ GREEN=\e[92m
 NC=\e[0m
 
 
-.PHONY: all install_requirements check check_testsuite clean test
+.PHONY: all install_requirements check check_testsuite clean test perfs
 
 # Simple execuction of the main
 all: clean install_requirements
@@ -39,12 +39,12 @@ check_debug: debug
 	python3 testsuite.py
 
 # Make performances
-perfs:
+perfs: clean install_requirements
 	python3 main.py perfs
 	python3 performance_measurement.py
 
 # Make performances & Debug
-perfs_debug:
+perfs_debug: clean install_requirements
 	python3 main.py debug perfs
 	python3 performance_measurement.py
 
