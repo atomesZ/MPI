@@ -17,6 +17,7 @@ from repl import *
 NB_CLIENT = int(sys.argv[1])
 NB_SERVER = int(sys.argv[2])
 DEBUG = sys.argv[3] == "True"
+PERFS = sys.argv[4] == "True"
 
 def main():
     if SIZE != NB_CLIENT + NB_SERVER + 1:

@@ -39,6 +39,7 @@ def main():
     n_nodes = n_clients + n_servers + 1
 
     debug = (len(sys.argv) > 1) and (sys.argv[1] == "debug")
+    perfs = (len(sys.argv) > 1) and ((sys.argv[1] == "perfs") or (sys.argv[2] == "perfs"))
 
     # Create dir
     os.makedirs('perfs',exist_ok=True)
@@ -55,7 +56,7 @@ def main():
               f"--stdin {n_nodes - 1} "
               f"-n {n_nodes} "
               f"--allow-run-as-root "
-              f"python3 mpi_main.py {n_clients} {n_servers} {debug}")
+              f"python3 mpi_main.py {n_clients} {n_servers} {debug} {perfs}")
 
 
 if __name__ == "__main__":

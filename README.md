@@ -31,6 +31,13 @@ Affiche les étapes intermédiaires :
 * Changement d'état d'un serveur (Candidat/Follower/Leader, Crash/Recovery) et de leur Time out
 * Envoi d'une donnée par un client et à quel leader
 
+### Mesure de performances
+Pour lancer les mesures de performances:  `make perfs`
+Pour lancer les mesures de performances et le debug:  `make perfs_debug`
+* Création du dossier perfs répertoriant les données de chaque serveur. 
+* Appel du fichier performance\_measurement.py qui analyse et regroupe les résultats des fichiers de perfs, en séparant les données du Leader et celles des Followers.
+
+
 ## Informations supplémentaires
 Le projet est codé en python. Lorsque la commande `make` est lancée, les requirements sont installés.  
 Version mpi4py : 3.1.1

@@ -38,6 +38,16 @@ check_debug: debug
 	@echo ""
 	python3 testsuite.py
 
+# Make performances
+perfs:
+	python3 main.py perfs
+	python3 performance_measurement.py
+
+# Make performances & Debug
+perfs_debug:
+	python3 main.py debug perfs
+	python3 performance_measurement.py
+
 # Remove all generated elements by the main
 clean:
 	@rm log_server_*.txt client_input_*.txt 2> /dev/null || true
