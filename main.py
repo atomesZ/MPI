@@ -42,14 +42,14 @@ def main():
     perfs = (len(sys.argv) > 1) and ((sys.argv[1] == "perfs") or (sys.argv[2] == "perfs"))
 
     # Create dir
-    os.makedirs('perfs',exist_ok=True)
-    #os.mkdir('clients_input') #TODO
-    #os.mkdir('clients_log') #TODO
+    os.makedirs('perfs', exist_ok=True)
+    os.mkdir('clients_input')
+    os.mkdir('logs_server')
 
     # Generate clients' data to send
     clients_data = generate_random_data(n_clients)
     for client_rank in range(n_clients):
-        with open(f"client_input_{client_rank}.txt", "w") as f:
+        with open(f"clients_input/client_input_{client_rank}.txt", "w") as f:
             f.writelines("%s\n" % l for l in clients_data[client_rank])
 
     os.system(f"mpiexec --host localhost:{n_nodes} "

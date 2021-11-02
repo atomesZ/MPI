@@ -1,6 +1,7 @@
 .git
 .idea
-log_server_*.txt
-client_input_*.txt
+logs_server
+clients_input
+perfs
 __pycache__
 *.swp

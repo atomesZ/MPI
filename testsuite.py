@@ -1,14 +1,16 @@
 import difflib
 import os
-import re
 
-r = re.compile("log_server_\d*\.txt")
-r_client = re.compile("client_input_\d*\.txt")
+client_input_files_dir_name = 'clients_input/'
+log_files_dir_name = 'logs_server/'
+try:
+    client_input_files = os.listdir(client_input_files_dir_name)
+    log_files = os.listdir(log_files_dir_name)
 
-files = os.listdir()
-
-log_files = list(filter(r.match, files))
-client_input_files = list(filter(r_client.match, files))
+    client_input_files = [client_input_files_dir_name + e for e in client_input_files]
+    log_files = [log_files_dir_name + e for e in log_files]
+except FileNotFoundError:
+    log_files = []
 
 errors = []
 errors_client = []
