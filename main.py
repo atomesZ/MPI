@@ -35,6 +35,11 @@ def main():
 
     debug = (len(sys.argv) > 1) and (sys.argv[1] == "debug")
 
+    # Create dir
+    os.makedirs('perfs',exist_ok=True)
+    #os.mkdir('clients_input') #TODO
+    #os.mkdir('clients_log') #TODO
+
     # Generate clients' data to send
     clients_data = generate_random_data(n_clients)
     for client_rank in range(n_clients):

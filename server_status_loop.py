@@ -1,3 +1,4 @@
+import globals
 from server_message import *
 
 import time
@@ -34,9 +35,14 @@ def candidat_loop():
             if "imtheleader" in data or "heartbeat" in data:  # Si un autre candidat est devenu leader avant lui :sad:
                 globals.status = "FOLLOWER"
                 globals.leader = server
+                if "imtheleader" in data:
+                    globals.recv_imleader += 1
+                else:
+                    globals.recv_heartbeat += 1
                 return
             # count votes received
             elif "vote" in data:
+                globals.recv_vote += 1
                 cpt = cpt + 1
             # else -> iwanttobecandidate -> skip
 
@@ -88,8 +94,10 @@ def follower_loop():
                 # leader election
                 elif "imtheleader" in data:
                     globals.leader = server
+                    globals.recv_imleader += 1
                 elif "iwanttobecandidate" in data:  # leader == -1: #todo - + si leader est mort check le heartbeat
                     # vote once per term
+                    globals.recv_candidate +=1
                     term_candidate = int(data.split('=')[1])
                     if globals.term < term_candidate:
                         vote(server)
@@ -98,8 +106,7 @@ def follower_loop():
                     # check if heartbeat send by current leader (and not by an old leader who was dead)
                     heartbeat_follower()
                     cpt_heartbeat_skip = 0
-
-
+                    globals.recv_heartbeat += 1
 
                 time_now = now()
                 time_out2 = random.randint(globals.TIME_OUT[0], globals.TIME_OUT[1])
@@ -159,7 +166,7 @@ def leader_loop():
 
                 elif tag == HEARTBEAT_FOLLOWER:
                     data[server - NB_CLIENT] = 1
-
+                    globals.recv_heartbeat += 1
                     # if the follower is late in his logs, sends him the good logs
                     if recv < globals.len_commit_logs:
                         with open(f"log_server_{RANK}.txt", "r") as f:

@@ -38,7 +38,7 @@ check_debug: clean debug
 	@echo ""
 	python3 testsuite.py
 
-
 # Remove all generated elements by the main
 clean:
 	@rm log_server_*.txt client_input_*.txt 2> /dev/null || true
+	@rm -rf perfs 2> /dev/null || true

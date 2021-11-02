@@ -1,5 +1,7 @@
+import globals
 from init_data import *
 import numpy as np
+import csv
 
 
 def isend_loop(rank: int, msg, tag_: int = SERVER_TAG):
@@ -18,6 +20,30 @@ def isend_loop_client(msg: str, tag_: int = CLIENT_TAG):
     for client in range(NB_CLIENT):
         comm.isend(msg, dest=client, tag=tag_)
 
+
+#Write Performance Measurement
+def write_perfs():
+    if if_server:
+        header = ['STATUS','TERM','RECV_HEARTBEAT', 'SEND_HEARTBEAT',
+                  'RECV_IWANTTOBECANDIDATE', 'SEND_IWANTTOBECANDIDATE',
+                  'SEND_VOTE', 'RECV_VOTE',
+                  'RECV_IMTHELEADER', 'SEND_IMTHELEADER',
+                  'TOTAL_RECV', 'TOTAL_SEND', 'TOTAL_MSG_WITHOUT_HEARTBEAT', 'TOTAL_MSG']
+        total_recv = globals.recv_heartbeat + globals.recv_candidate + globals.recv_imleader
+        total_send = globals.send_heartbeat + globals.send_vote + globals.send_imleader
+        total_msg = total_send + total_recv
+        total_msg_without_heartbeat = globals.recv_candidate + globals.recv_imleader + globals.send_vote + globals.send_imleader
+        data = [globals.status, globals.term, globals.recv_heartbeat, globals.send_heartbeat,
+                globals.recv_candidate, globals.send_candidate, globals.recv_vote, globals.send_vote,
+                globals.recv_imleader, globals.send_imleader, total_recv, total_send, total_msg_without_heartbeat, total_msg]
+        if DEBUG:
+            print("--DEBUG : write perfs of server:", RANK)
+        file = "perfs/perfs_"+str(RANK)+".csv"
+        with open(file, 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow(header)
+            spamwriter.writerow(data)
 
 def listen_repl():
     data = comm.recv(source=REPL_UID)
@@ -43,6 +69,8 @@ def listen_repl():
                 break
 
             elif "END" in data:
+                write_perfs()
+                print("--DEBUG write finish",RANK,"- EXIT")
                 exit(0)
 
     elif "RECOVERY" in data:
@@ -51,6 +79,7 @@ def listen_repl():
         pass  # process vivant
 
     elif "END" in data:
+        write_perfs()
         exit(0)
 
     return data
@@ -75,22 +104,27 @@ def irecv_data():
 
 
 def election(rank_candidat: int):
+    globals.send_candidate += 1
     isend_loop(rank_candidat, "iwanttobecandidate_term=" + str(globals.term))
 
 
 def im_the_leader():
+    globals.send_imleader += 1
     isend_loop(globals.leader, "imtheleader")
 
 
 def heartbeat_leader():
+    globals.send_heartbeat += 1
     isend_loop(globals.leader, "heartbeat_leader" + str(globals.term))
 
 
 def heartbeat_follower():
+    globals.send_heartbeat += 1
     comm.isend(globals.len_commit_logs, dest=globals.leader, tag=HEARTBEAT_FOLLOWER)
 
 
 def vote(rank_candidat: int):
+    globals.send_vote += 1
     comm.isend("vote", dest=rank_candidat, tag=SERVER_TAG)
 
 

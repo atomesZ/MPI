@@ -1,5 +1,5 @@
+import globals
 from server_status_loop import *
-
 
 def start_clients():
     # nothing to parse : send to clients
@@ -56,7 +56,6 @@ def end_all_nodes():
     for processus_uid in range(NB_CLIENT + NB_SERVER):
         comm.isend("END", dest=processus_uid, tag=REPL_TAG)
     exit(0)
-
 
 def main_repl():
     while True:
