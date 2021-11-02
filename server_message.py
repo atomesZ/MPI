@@ -30,14 +30,13 @@ def write_perfs():
                   'RECV IWANTTOBECANDIDATE', 'SEND IWANTTOBECANDIDATE',
                   'SEND VOTE', 'RECV VOTE',
                   'RECV IMTHELEADER', 'SEND IMTHELEADER',
-                  'TOTAL RECV', 'TOTAL SEND', 'TOTAL MSG WITHOUT HEARTBEAT', 'TOTAL MSG']
+                  'TOTAL RECV', 'TOTAL SEND', 'TOTAL MSG']
         total_recv = globals.recv_heartbeat + globals.recv_candidate + globals.recv_imleader
         total_send = globals.send_heartbeat + globals.send_vote + globals.send_imleader
         total_msg = total_send + total_recv
-        total_msg_without_heartbeat = globals.recv_candidate + globals.recv_imleader + globals.send_vote + globals.send_imleader
         data = [globals.status, globals.term, globals.recv_heartbeat, globals.send_heartbeat,
                 globals.recv_candidate, globals.send_candidate, globals.recv_vote, globals.send_vote,
-                globals.recv_imleader, globals.send_imleader, total_recv, total_send, total_msg_without_heartbeat, total_msg]
+                globals.recv_imleader, globals.send_imleader, total_recv, total_send, total_msg]
         if DEBUG:
             print("--DEBUG : write perfs of server:", RANK)
         file = "perfs/perfs_"+str(RANK)+".csv"
